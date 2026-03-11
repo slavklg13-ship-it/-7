@@ -1,0 +1,2053 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>АльтернативА МИС 2.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/main.css">
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- SheetJS для Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="lcard">
+    <div class="lico">⚕</div>
+    <div class="lname">АльтернативА</div>
+    <div class="lsub">Медицинская информационная система v2.0</div>
+    <div style="margin-bottom:16px;">
+      <label class="ll">Выберите роль</label>
+      <div class="lroles">
+        <div class="lrole on" onclick="selRole(this,'director')" id="rb-d"><span>👑</span>Руководитель</div>
+        <div class="lrole" onclick="selRole(this,'doctor')" id="rb-doc"><span>🩺</span>Врач</div>
+        <div class="lrole" onclick="selRole(this,'admin')" id="rb-a"><span>📋</span>Администратор</div>
+      </div>
+    </div>
+    <div id="lerr" class="lerr">Неверный логин или пароль</div>
+    <label class="ll">Логин</label>
+    <input class="li" id="lu" value="director">
+    <label class="ll">Пароль</label>
+    <input class="li" id="lp" type="password" value="1234" onkeydown="if(event.key==='Enter')login()">
+    <button class="lbtn" onclick="login()">Войти в систему →</button>
+    <div class="lhint"><b>Тестовые аккаунты (v3.1):</b><br>director/1234 · doctor/1234 · admin/1234</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- API KEY BAR -->
+  <div id="api-key-bar">
+    <span>🤖</span>
+    <span style="color:#92400e;font-weight:600;">🧠 DeepSeek AI:</span>
+    <span style="color:#78350f;">Введите DeepSeek API-ключ для работы AI</span>
+    <input id="api-key-inp" type="password" placeholder="sk-...">
+    <button class="btn bp sm" onclick="saveApiKey(document.getElementById('api-key-inp').value);toast('✅ Ключ сохранён')">Сохранить</button>
+    <button class="btn bg sm" onclick="document.getElementById('api-key-bar').classList.add('hidden')" style="margin-left:auto;">✕</button>
+  </div>
+  <div class="tb">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="font-family:var(--serif);font-size:16px;font-weight:600;color:#0f172a;">АльтернативА МИС</div>
+      <div id="trb" class="trb"></div>
+    </div>
+    <div class="tsrch"><span style="color:#64748b;">🔍</span><input placeholder="Поиск..."></div>
+    <div class="tright">
+      <span style="font-size:12px;color:var(--text3);" id="tname"></span>
+      <button class="btn bg sm no-print" onclick="printPage()" title="Печать текущей страницы">🖨 Печать</button>
+      <button class="btn bw sm no-print" onclick="saveDocx()" title="Сохранить протокол в DOCX">💾 DOCX</button>
+      <div class="ibtn" onclick="toggleApiBar()" title="Настройки AI">🤖</div>
+      <div class="ibtn" onclick="openM('m-notif')">🔔<div class="npip"></div></div>
+      <button class="lout" onclick="logout()">← Выйти</button>
+    </div>
+  </div>
+  <div class="ai">
+    <!-- SIDEBAR -->
+    <aside class="sb">
+      <div class="slg">
+        <div class="slg-row"><div class="slg-i">⚕</div><div class="slg-n">АльтернативА</div></div>
+        <div class="slg-s">МИС Клиники</div>
+      </div>
+      <div class="ng"><span class="nl">Главное</span>
+        <div class="ni on" id="n-dash" onclick="go('dash')"><span class="ni-i">🏠</span>Дашборд</div>
+        <div class="ni" id="n-sched" onclick="go('sched')"><span class="ni-i">📅</span>Расписание<span class="nbdg nb-b">4</span></div>
+      </div>
+      <div class="ng"><span class="nl">Пациенты</span>
+        <div class="ni" id="n-patients" onclick="go('patients')"><span class="ni-i">👥</span>База пациентов</div>
+        <div class="ni" id="n-emr" onclick="go('emr')"><span class="ni-i">🩺</span>Приём / ЭМК</div>
+        <div class="ni" id="n-rehab" onclick="go('rehab')"><span class="ni-i">🏃</span>Реабилитация</div>
+      </div>
+      <div class="ng"><span class="nl">Процедуры</span>
+        <div class="ni" id="n-prp" onclick="go('prp')"><span class="ni-i">💉</span>PRP-терапия</div>
+        <div class="ni" id="n-uzi" onclick="go('uzi')"><span class="ni-i">🔬</span>УЗИ-диагностика</div>
+        <div class="ni" id="n-pod" onclick="go('pod')"><span class="ni-i">🦶</span>Подология</div>
+      </div>
+      <div class="ng"><span class="nl">Врач</span>
+        <div class="ni" id="n-doctor" onclick="go('doctor')"><span class="ni-i">🩺</span>Рабочее место</div>
+        <div class="ni" id="n-plans" onclick="go('plans')"><span class="ni-i">📋</span>Планы лечения</div>
+        <div class="ni" id="n-tpl" onclick="go('tpl')"><span class="ni-i">📝</span>Протоколы</div>
+        <div class="ni" id="n-docs" onclick="go('docs')"><span class="ni-i">📄</span>Документы</div>
+      </div>
+      <div class="ng"><span class="nl">Администратор</span>
+        <div class="ni" id="n-crm" onclick="go('crm')"><span class="ni-i">💬</span>CRM<span class="nbdg nb-r">3</span></div>
+        <div class="ni" id="n-funnel" onclick="go('funnel')"><span class="ni-i">🎯</span>Воронка лидов</div>
+        <div class="ni" id="n-tasks" onclick="go('tasks')"><span class="ni-i">✅</span>Задачи<span class="nbdg nb-r" id="n-tasks-cnt" style="display:none;"></span></div>
+        <div class="ni" id="n-care" onclick="go('care')"><span class="ni-i">🤖</span>Умная забота</div>
+        <div class="ni" id="n-kassa" onclick="go('kassa')"><span class="ni-i">💰</span>Касса</div>
+        <div class="ni" id="n-loyalty" onclick="go('loyalty')"><span class="ni-i">🏅</span>Лояльность</div>
+      </div>
+      <div class="ng"><span class="nl">Руководитель</span>
+        <div class="ni" id="n-reports" onclick="go('reports')"><span class="ni-i">📊</span>Отчёты</div>
+        <div class="ni" id="n-analytics" onclick="go('analytics')"><span class="ni-i">📈</span>Аналитика</div>
+        <div class="ni" id="n-salary" onclick="go('salary')"><span class="ni-i">💵</span>Зарплата</div>
+        <div class="ni" id="n-svcs" onclick="go('svcs')"><span class="ni-i">🔧</span>Услуги</div>
+        <div class="ni" id="n-stock" onclick="go('stock')"><span class="ni-i">📦</span>Склад</div>
+        <div class="ni" id="n-users" onclick="go('users')"><span class="ni-i">👤</span>Пользователи</div>
+      </div>
+      <div class="sftr">
+        <div class="uchp">
+          <div class="uava" id="sava"></div>
+          <div><div class="un" id="sname"></div><div class="ur" id="srole"></div></div>
+          <div class="odot"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <div class="cnt">
+
+<!-- DASHBOARD -->
+<div class="page on" id="p-dash">
+  <div class="g5" style="margin-bottom:14px;">
+    <div class="sc blue"><div class="sc-i">👥</div><div class="sc-v" id="ds-pts">0</div><div class="sc-l">Пациентов</div></div>
+    <div class="sc mint"><div class="sc-i">📅</div><div class="sc-v" id="ds-today">0</div><div class="sc-l">Сегодня записей</div></div>
+    <div class="sc amber"><div class="sc-i">👤</div><div class="sc-v" id="ds-staff">3</div><div class="sc-l">Сотрудников</div></div>
+    <div class="sc sky"><div class="sc-i">🔧</div><div class="sc-v" id="ds-svcs">48</div><div class="sc-l">Услуг в каталоге</div></div>
+    <div class="sc purple"><div class="sc-i">📦</div><div class="sc-v" id="ds-stock">0</div><div class="sc-l">Позиций на складе</div></div>
+  </div>
+  <div class="g2" style="margin-bottom:13px;">
+    <div class="card">
+      <div class="ch"><span class="ct">Приёмы сегодня — 9 марта</span><button class="btn bg sm" onclick="go('sched')">Расписание →</button></div>
+      <div id="dash-today-list"><div style="text-align:center;padding:28px;color:#64748b;font-size:12px;">
+        <div style="font-size:28px;margin-bottom:8px;opacity:.4;">📅</div>Нет записей на сегодня<br><button class="btn bp sm" style="margin-top:10px;" onclick="go('sched')">+ Добавить запись</button></div></div>
+    </div>
+    <div class="aip">
+      <div class="aih"><div class="aidot"></div><div class="aitl">AI-ассистент АльтернативА</div><span class="b b-mi" style="margin-left:auto;">Claude</span></div>
+      <div class="aim" id="m-dash"><div class="am sys"><div class="amr">🤖 Система</div>Добрый день! Помогу составить протокол, проверить противопоказания или ответить на клинический вопрос.</div></div>
+      <div class="aif"><input class="aii" id="i-dash" placeholder="Задайте вопрос..." onkeydown="if(event.key==='Enter')aiSend('dash')"><button class="ais" onclick="aiSend('dash')">→</button></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">Последние пациенты</span><button class="btn bg sm" onclick="go('patients')">Все →</button></div>
+      <div id="dash-recent-pts"><div style="text-align:center;padding:20px;color:#64748b;font-size:12px;opacity:.6;">Нет пациентов</div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">Быстрые действия</span></div>
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <button class="btn bp" style="width:100%;justify-content:flex-start;" onclick="openM('m-addpt')">👥 Добавить пациента</button>
+        <button class="btn bg" style="width:100%;justify-content:flex-start;" onclick="go('patients')">🔍 База пациентов</button>
+        <button class="btn bg" style="width:100%;justify-content:flex-start;" onclick="go('prp')">💉 PRP-терапия</button>
+        <button class="btn bg" style="width:100%;justify-content:flex-start;" onclick="go('stock')">📦 Склад</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- PATIENTS - FULL CRUD -->
+<div class="page" id="p-patients">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div>
+      <div style="font-family:var(--serif);font-size:20px;font-weight:600;">База пациентов</div>
+      <div style="font-size:12px;color:var(--text3);" id="pt-count">Загрузка...</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input class="fc" id="pt-search" placeholder="🔍 Поиск по имени, телефону..." style="width:240px;padding:7px 12px;font-size:12px;" oninput="renderPatients()">
+      <button class="btn bp" id="btn-newpt" onclick="openM('m-addpt')">＋ Добавить пациента</button>
+    </div>
+  </div>
+  <div class="card">
+    <table id="pt-table">
+      <thead><tr>
+        <th>Пациент</th><th>Дата рождения</th><th>Пол</th><th>Телефон</th>
+        <th>Диагноз МКБ-10</th><th>Источник</th><th>Статус</th><th style="text-align:center;">Действия</th>
+      </tr></thead>
+      <tbody id="pt-tbody"></tbody>
+    </table>
+    <div id="pt-empty" style="display:none;text-align:center;padding:40px;color:var(--text3);">
+      <div style="font-size:36px;margin-bottom:10px;">👥</div>
+      <div style="font-size:14px;font-weight:600;">Пациентов пока нет</div>
+      <div style="font-size:12px;margin-top:5px;">Нажмите «Добавить пациента» чтобы начать</div>
+    </div>
+  </div>
+</div>
+
+<!-- EMR -->
+<div class="page" id="p-emr">
+  <div class="pth">
+    <div class="pta" style="background:linear-gradient(135deg,var(--blue),var(--rose));">СЕ</div>
+    <div>
+      <div class="ptn">Смирнова Елена Александровна</div>
+      <div class="ptm">54 г. · Ж · +7 916 123-45-67 · M17.1 — Гонартроз правого коленного сустава, 2 ст.</div>
+      <div style="display:flex;gap:5px;margin-top:7px;">
+        <span class="b b-bl">Активный</span><span class="b b-am">⚠ НПВС отменить</span><span class="b b-mi">PRP: 20.03</span>
+      </div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:7px;">
+      <button class="btn bg sm" onclick="openM('m-doc')">📄 Документы</button>
+      <button class="btn bp sm" id="emr-ai-btn" onclick="aiProto()">🤖 AI-протокол</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab on" onclick="swTab(this,'te-exam')">🩺 Осмотр</div>
+    <div class="tab" onclick="swTab(this,'te-hist')">📋 История</div>
+    <div class="tab" onclick="swTab(this,'te-plan')">📌 План</div>
+    <div class="tab" onclick="swTab(this,'te-labs')">🧪 Анализы</div>
+  </div>
+  <div class="split">
+    <div>
+      <div id="te-exam">
+        <div class="card" style="margin-bottom:11px;">
+          <div class="sct">Жалобы и анамнез</div>
+          <div class="fr"><div class="fg"><label class="fl">Зона боли</label><select class="fc"><option>Коленный (правый)</option><option>Коленный (левый)</option><option>Тазобедренный</option><option>Плечевой</option></select></div><div class="fg"><label class="fl">Характер</label><select class="fc"><option>Ноющая</option><option>Острая</option><option>Стартовая</option></select></div></div>
+          <div class="fg"><label class="fl">ВАШ 0–10</label><div class="vas"><span style="font-size:10px;color:var(--text3);">0</span><input type="range" min="0" max="10" value="6" oninput="document.getElementById('vv').textContent=this.value"><span style="font-size:10px;color:var(--text3);">10</span><div class="vas-n" id="vv">6</div></div></div>
+          <div class="fr"><div class="fg"><label class="fl">Усиление при</label><select class="fc"><option>Ходьбе</option><option>Нагрузке</option><option>В покое</option><option>Ночью</option></select></div><div class="fg"><label class="fl">Скованность (мин)</label><input class="fc" type="number" value="20"></div></div>
+          <div class="fg"><label class="fl">Анамнез</label><textarea class="fc" rows="2">Жалобы 1,5 года. НПВС — временный эффект. МРТ: хондромаляция 2 ст., синовит умеренный.</textarea></div>
+        </div>
+        <div class="card" style="margin-bottom:11px;">
+          <div class="sct">Объективный осмотр</div>
+          <div class="fr3"><div class="fg"><label class="fl">Масса (кг)</label><input class="fc" type="number" value="72"></div><div class="fg"><label class="fl">Рост (см)</label><input class="fc" type="number" value="165"></div><div class="fg"><label class="fl">ИМТ</label><input class="fc" value="26.4" readonly style="color:var(--mint);font-weight:700;"></div></div>
+          <div class="fr"><div class="fg"><label class="fl">Ось</label><select class="fc"><option>Не нарушена</option><option selected>Варусная умеренная</option></select></div><div class="fg"><label class="fl">Отёк</label><select class="fc"><option>Нет</option><option selected>Умеренный (+)</option><option>Выраженный (++)</option></select></div></div>
+          <div class="fr3"><div class="fg"><label class="fl">Сгибание (°)</label><input class="fc" type="number" value="110"></div><div class="fg"><label class="fl">Разгибание (°)</label><input class="fc" type="number" value="-5"></div><div class="fg"><label class="fl">Крепитация</label><select class="fc"><option>Есть</option><option>Нет</option></select></div></div>
+        </div>
+        <div class="card" style="margin-bottom:11px;">
+          <div class="sct">Спец. тесты</div>
+          <div class="cl">
+            <div class="cr on"><input type="checkbox" checked><label>Мак-Мюррей — <b>положительный</b></label></div>
+            <div class="cr"><input type="checkbox"><label>Лахман — отрицательный</label></div>
+            <div class="cr on"><input type="checkbox" checked><label>Апли — <b>положительный</b></label></div>
+            <div class="cr"><input type="checkbox"><label>Выдвижной ящик — отрицательный</label></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sct">Диагноз и план</div>
+          <div class="fg"><label class="fl">Диагноз МКБ-10</label><input class="fc" value="M17.1 — Первичный гонартроз, правый коленный сустав, 2 стадия"></div>
+          <div class="cl">
+            <div class="cr on"><input type="checkbox" checked><label>💉 PRP-терапия: 3 инъекции × 14 дней</label></div>
+            <div class="cr on"><input type="checkbox" checked><label>🔬 УЗИ контрольное через 4 недели</label></div>
+            <div class="cr on"><input type="checkbox" checked><label>🏃 ЛФК индивидуальная программа</label></div>
+            <div class="cr"><input type="checkbox"><label>🦶 Ортопедические стельки</label></div>
+          </div>
+          <div style="display:flex;gap:7px;margin-top:12px;" id="emr-save">
+            <button class="btn bp sm" onclick="toast('✅ Протокол сохранён в ЭМК')">💾 Сохранить</button>
+            <button class="btn bg sm" onclick="aiProto()">🤖 AI-дополнить</button>
+            <button class="btn bg sm" onclick="openM('m-doc')">📄 Документ</button>
+          </div>
+        </div>
+      </div>
+      <div id="te-hist" style="display:none;">
+        <div class="card">
+          <div class="ct" style="margin-bottom:14px;">История визитов</div>
+          <div class="tl">
+            <div class="tli"><div class="tll"><div class="tldot" style="background:var(--blue-l);color:var(--blue);">🩺</div><div class="tlcon"></div></div><div class="tlbd"><div class="tlw">09.03.2026 · Первичный осмотр</div><div class="tlwh">M17.1 Гонартроз 2 ст. — Иванов П.С.</div><div class="tld2">ВАШ 6/10. Назначен курс PRP ×3. Памятка отправлена.</div></div></div>
+            <div class="tli"><div class="tll"><div class="tldot" style="background:#e2e8f0;color:var(--mint);">💉</div><div class="tlcon"></div></div><div class="tlbd"><div class="tlw">20.03.2026 · PRP №1</div><div class="tlwh">Инъекция правый коленный сустав</div><div class="tld2">PRP 4 мл, тромбоциты 980×10⁹/л. УЗИ-навигация. Переносимость хорошая.</div></div></div>
+            <div class="tli"><div class="tll"><div class="tldot" style="background:var(--rose-l);color:var(--rose);">🔬</div></div><div class="tlbd"><div class="tlw">15.02.2026 · УЗИ</div><div class="tlwh">УЗИ правого коленного сустава</div><div class="tld2">Синовит умеренный. Хрящ 1.8 мм. Выпот 4 мл.</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div id="te-plan" style="display:none;">
+        <div class="card">
+          <div class="ct" style="margin-bottom:12px;">Индивидуальный план лечения</div>
+          <div class="al a-bl">🤖 AI-план на основе M17.1, ВАШ 6/10, МРТ и анамнеза.</div>
+          <div class="stage s1"><div style="font-weight:700;margin-bottom:5px;">💉 PRP-терапия (март–апрель)</div><div style="font-size:12px;color:var(--text2);">3 инъекции × 14 дней. УЗИ-навигация. Без НПВС за 3 дня.</div></div>
+          <div class="stage s2"><div style="font-weight:700;margin-bottom:5px;">🔬 Контроль УЗИ (апрель)</div><div style="font-size:12px;color:var(--text2);">Через 4 нед после PRP №3. Оценка хряща и синовита.</div></div>
+          <div class="stage s3"><div style="font-weight:700;margin-bottom:5px;">🏃 ЛФК / Реабилитация</div><div style="font-size:12px;color:var(--text2);">Квадрицепс, ягодичные. Велотренажёр 20 мин/день.</div></div>
+        </div>
+      </div>
+      <div id="te-labs" style="display:none;">
+        <div class="card">
+          <div class="ch"><div class="ct">Лабораторные данные</div><button class="btn bg sm" onclick="toast('+ Добавление анализа')">+ Добавить</button></div>
+          <table><thead><tr><th>Показатель</th><th>Значение</th><th>Норма</th><th>Статус</th><th>Дата</th></tr></thead><tbody>
+            <tr><td>Тромбоциты</td><td><b>234 × 10⁹/л</b></td><td>150–400</td><td><span class="b b-mi">✓ Норма</span></td><td>01.03.2026</td></tr>
+            <tr><td>СОЭ</td><td><b>18 мм/ч</b></td><td>до 20</td><td><span class="b b-mi">✓ Норма</span></td><td>01.03.2026</td></tr>
+            <tr><td>Мочевая кислота</td><td><b>380 мкмоль/л</b></td><td>до 360</td><td><span class="b b-am">↑ Выше</span></td><td>01.03.2026</td></tr>
+            <tr><td>НПВС</td><td colspan="2">Диклофенак 75 мг — отменить за 3 дня до PRP</td><td><span class="b b-re">⚠ Внимание</span></td><td>—</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="aip" style="margin-bottom:11px;">
+        <div class="aih"><div class="aidot"></div><div class="aitl">AI — Пациент</div></div>
+        <div class="aim" id="m-emr"><div class="am sys"><div class="amr">🤖 Анализ</div><b>Смирнова Е.А., 54 г.</b> — M17.1, ВАШ 6/10.<br>Рекомендую: PRP ×3, интервал 2 нед. Отменить НПВС за 3 дня.</div></div>
+        <div class="aif"><input class="aii" id="i-emr" placeholder="Вопрос по пациенту..." onkeydown="if(event.key==='Enter')aiSend('emr')"><button class="ais" onclick="aiSend('emr')">→</button></div>
+      </div>
+      <div class="card">
+        <div class="ct">⚠️ Противопоказания PRP</div>
+        <div class="cl">
+          <div class="cr on"><input type="checkbox" checked disabled><label>✅ Онкология — нет</label></div>
+          <div class="cr on"><input type="checkbox" checked disabled><label>✅ Тромбоциты — норма</label></div>
+          <div class="cr on"><input type="checkbox" checked disabled><label>✅ Инфекция — нет</label></div>
+          <div class="cr on"><input type="checkbox" checked disabled><label>✅ Беременность — нет</label></div>
+          <div class="cr warn"><input type="checkbox" disabled><label>⚠️ НПВС — принимает. Отменить!</label></div>
+        </div>
+        <div class="al a-am" style="margin-top:9px;font-size:11px;">Отменить диклофенак за 3 дня до PRP!</div>
+        <button class="btn bp sm" style="width:100%;margin-top:7px;" onclick="toast('📱 Памятка отправлена Смирновой Е.А.')">📱 Отправить памятку</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRP -->
+<div class="page" id="p-prp">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div style="font-family:var(--serif);font-size:20px;font-weight:600;">PRP-терапия</div>
+    <button class="btn bp" id="btn-prp" onclick="openM('m-prp')">＋ Новый протокол</button>
+  </div>
+  <div class="g3" style="margin-bottom:13px;">
+    <div class="sc blue"><div class="sc-i">💉</div><div class="sc-v">24</div><div class="sc-l">Процедур / март</div></div>
+    <div class="sc mint"><div class="sc-i">📈</div><div class="sc-v">91%</div><div class="sc-l">Положит. динамика</div></div>
+    <div class="sc rose"><div class="sc-i">🔁</div><div class="sc-v">3.2</div><div class="sc-l">Ср. инъекций / курс</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><span class="ct">Активные курсы PRP</span></div>
+    <table><thead><tr><th>Пациент</th><th>Диагноз</th><th>Зона</th><th>Курс</th><th>Тромбоциты</th><th>Следующая</th><th>Статус</th></tr></thead><tbody>
+      <tr><td><b>Козлов В.Н.</b></td><td>M16.1 Коксартроз 3 ст.</td><td>ТБС правый</td><td><div style="display:flex;align-items:center;gap:6px;"><div class="sb2"><div class="ss on"></div><div class="ss on"></div><div class="ss"></div></div>2/3</div></td><td>1020×10⁹/л</td><td style="color:var(--blue);font-weight:600;">Сегодня</td><td><span class="b b-am">В процессе</span></td></tr>
+      <tr><td><b>Смирнова Е.А.</b></td><td>M17.1 Гонартроз 2 ст.</td><td>Колено правое</td><td><div style="display:flex;align-items:center;gap:6px;"><div class="sb2"><div class="ss on"></div><div class="ss"></div><div class="ss"></div></div>1/3</div></td><td>980×10⁹/л</td><td>20.03.2026</td><td><span class="b b-bl">Начат</span></td></tr>
+      <tr><td><b>Новиков С.П.</b></td><td>M77.0 Тендинопатия ВМП</td><td>Плечо левое</td><td><div style="display:flex;align-items:center;gap:6px;"><div class="sb2"><div class="ss on"></div><div class="ss on"></div><div class="ss on"></div></div>3/3</div></td><td>870×10⁹/л</td><td>—</td><td><span class="b b-mi">Завершён</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<!-- UZI -->
+<div class="page" id="p-uzi">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div style="font-family:var(--serif);font-size:20px;font-weight:600;">УЗИ-диагностика</div>
+    <button class="btn bp" onclick="toast('Создан новый протокол УЗИ')">＋ Новый протокол</button>
+  </div>
+  <div class="split">
+    <div class="card">
+      <div class="ch"><span class="ct">Протокол УЗИ — Коленный сустав</span></div>
+      <div class="fr"><div class="fg"><label class="fl">Пациент</label><input class="fc" value="Орлова Н.С."></div><div class="fg"><label class="fl">Сторона</label><select class="fc"><option>Правая</option><option>Левая</option></select></div></div>
+      <div class="sct">Суставная щель</div>
+      <div class="fr3"><div class="fg"><label class="fl">Медиально (мм)</label><input class="fc" type="number" value="3.2"></div><div class="fg"><label class="fl">Латерально (мм)</label><input class="fc" type="number" value="4.1"></div><div class="fg"><label class="fl">Сужение</label><select class="fc"><option>Умеренное</option><option>Значительное</option></select></div></div>
+      <div class="fr"><div class="fg"><label class="fl">Хрящ (мм)</label><input class="fc" type="number" value="1.8"></div><div class="fg"><label class="fl">Синовия (мм)</label><input class="fc" type="number" value="3.4"></div></div>
+      <div class="fr"><div class="fg"><label class="fl">Выпот (мл)</label><input class="fc" type="number" value="4"></div><div class="fg"><label class="fl">Эхогенность</label><select class="fc"><option>Гипоэхогенный</option><option>Анэхогенный</option></select></div></div>
+      <div class="dicom" style="margin-bottom:10px;"><p>📁 Загрузить DICOM / изображение</p></div>
+      <div class="fg"><label class="fl">Заключение</label><textarea class="fc" id="uzi-c" rows="3">Эхо-признаки гонартроза 2 ст. справа. Синовит умеренный. Хондромаляция 1.8 мм.</textarea></div>
+      <div style="display:flex;gap:7px;"><button class="btn bp sm" onclick="toast('✅ Протокол УЗИ сохранён')">💾 Сохранить</button><button class="btn bg sm" onclick="aiUZI()">🤖 AI-заключение</button></div>
+    </div>
+    <div class="aip">
+      <div class="aih"><div class="aidot"></div><div class="aitl">AI УЗД-ассистент</div></div>
+      <div class="aim" id="m-uzi"><div class="am sys"><div class="amr">🔬 УЗИ</div>Введите параметры и нажмите «AI-заключение» — сформирую протокол.</div></div>
+      <div class="aif"><input class="aii" id="i-uzi" placeholder="Параметры или вопрос..." onkeydown="if(event.key==='Enter')aiSend('uzi')"><button class="ais" onclick="aiSend('uzi')">→</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- POD -->
+<div class="page" id="p-pod">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div style="font-family:var(--serif);font-size:20px;font-weight:600;">Подология</div>
+    <button class="btn bp" onclick="toast('Создан осмотр')">＋ Новый осмотр</button>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">Протокол подологического осмотра</span></div>
+      <div class="fg"><label class="fl">Пациент</label><select class="fc"><option>Новикова А.В.</option><option>Смирнова Е.А.</option></select></div>
+      <div class="sct">Состояние кожи</div>
+      <div class="cl">
+        <div class="cr on"><input type="checkbox" checked><label>Гиперкератоз (пятки)</label></div>
+        <div class="cr on"><input type="checkbox" checked><label>Трещины — правая пятка</label></div>
+        <div class="cr"><input type="checkbox"><label>Мозоли / натоптыши</label></div>
+        <div class="cr"><input type="checkbox"><label>Грибковое поражение</label></div>
+      </div>
+      <div class="sct" style="margin-top:10px;">Деформации</div>
+      <div class="fr"><div class="fg"><label class="fl">Hallux valgus</label><select class="fc"><option>Нет</option><option selected>I степень</option><option>II степень</option></select></div><div class="fg"><label class="fl">Плоскостопие</label><select class="fc"><option>Нет</option><option selected>II продольное</option></select></div></div>
+      <div class="sct">Манипуляции</div>
+      <div class="cl">
+        <div class="cr on"><input type="checkbox" checked><label>✅ Аппаратная обработка гиперкератоза</label></div>
+        <div class="cr on"><input type="checkbox" checked><label>✅ Обработка трещин — антисептик</label></div>
+      </div>
+      <div style="margin-top:11px;"><button class="btn bp sm" onclick="toast('✅ Протокол подологии сохранён')">💾 Сохранить</button></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:11px;">
+        <div class="ch"><span class="ct">📸 Фото до / после</span></div>
+        <div class="photog">
+          <div class="photop"><span style="font-size:20px;">📷</span><div style="font-size:11px;color:var(--text3);">До</div></div>
+          <div class="photop"><span style="font-size:20px;">📷</span><div style="font-size:11px;color:var(--text3);">После</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct">Следующий визит</div>
+        <div class="fr"><div class="fg"><label class="fl">Через (дней)</label><input class="fc" type="number" value="30"></div><div class="fg"><label class="fl">Процедура</label><select class="fc"><option>Контрольный</option><option>Повторная обработка</option></select></div></div>
+        <button class="btn bg sm" style="width:100%;" onclick="toast('📱 Напоминание запланировано')">📱 Запланировать</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REHAB -->
+<div class="page" id="p-rehab">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div style="font-family:var(--serif);font-size:20px;font-weight:600;">Реабилитация</div>
+    <button class="btn bp" onclick="aiRehab()">🤖 AI-план реабилитации</button>
+  </div>
+  <div class="split">
+    <div class="card">
+      <div class="ch"><span class="ct">Индивидуальный план — Смирнова Е.А.</span><span class="b b-bl">Активный</span></div>
+      <div class="stage s1"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><div style="font-weight:700;font-size:13px;">Этап 1 — Ранний (1–2 нед.)</div><span class="b b-mi">Текущий</span></div><div style="font-size:12px;color:var(--text2);">Изометрия квадрицепса 15×3. Подъём прямой ноги 10×3. Криотерапия 15 мин 3×/день.</div></div>
+      <div class="stage s2"><div style="font-weight:700;font-size:13px;margin-bottom:5px;">Этап 2 — Восстановительный (3–8 нед.)</div><div style="font-size:12px;color:var(--text2);">Велотренажёр 20 мин/день. Укрепление мышц бедра. Бассейн.</div></div>
+      <div class="stage s3"><div style="font-weight:700;font-size:13px;margin-bottom:5px;">Этап 3 — Функциональный (2–4 мес.)</div><div style="font-size:12px;color:var(--text2);">Ходьба 30+ мин/день. Снижение веса на 5 кг.</div></div>
+      <div id="rehab-r"></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:11px;">
+        <div class="ct">Динамика ВАШ</div>
+        <div class="bc" style="margin-top:8px;">
+          <div class="br2"><div class="blab">До лечения</div><div class="btr"><div class="bfl" style="width:80%;background:linear-gradient(90deg,var(--red),#fb7185);"></div></div><div class="bvl">8/10</div></div>
+          <div class="br2"><div class="blab">PRP №1</div><div class="btr"><div class="bfl" style="width:60%;background:linear-gradient(90deg,var(--amber),#fbbf24);"></div></div><div class="bvl">6/10</div></div>
+          <div class="br2"><div class="blab">PRP №2 (план)</div><div class="btr"><div class="bfl" style="width:40%;background:linear-gradient(90deg,var(--blue),var(--lav));"></div></div><div class="bvl">4/10</div></div>
+          <div class="br2"><div class="blab">PRP №3 (цель)</div><div class="btr"><div class="bfl" style="width:20%;background:linear-gradient(90deg,var(--mint),#4a6cf7);"></div></div><div class="bvl">2/10</div></div>
+        </div>
+      </div>
+      <div class="aip">
+        <div class="aih"><div class="aidot"></div><div class="aitl">AI Реабилитолог</div></div>
+        <div class="aim" id="m-rehab"><div class="am sys"><div class="amr">🏃</div>Нажмите «AI-план» — составлю программу реабилитации.</div></div>
+        <div class="aif"><input class="aii" id="i-rehab" placeholder="Вопрос о реабилитации..." onkeydown="if(event.key==='Enter')aiSend('rehab')"><button class="ais" onclick="aiSend('rehab')">→</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CRM -->
+<div class="page" id="p-crm">
+  <div style="margin-bottom:14px;font-family:var(--serif);font-size:20px;font-weight:600;">CRM — Коммуникации</div>
+  <div class="g3" style="margin-bottom:13px;">
+    <div class="sc blue"><div class="sc-i">📅</div><div class="sc-v">8</div><div class="sc-l">Записей / нед.</div></div>
+    <div class="sc mint"><div class="sc-i">✓</div><div class="sc-v">94%</div><div class="sc-l">Явка пациентов</div></div>
+    <div class="sc rose"><div class="sc-i">💬</div><div class="sc-v">3</div><div class="sc-l">Ожидают ответа</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">Входящие запросы</span><span class="b b-re">3 новых</span></div>
+      <div style="padding:12px;background:#f8f9ff;border-radius:10px;border-left:3px solid var(--amber);margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><b>Захарова М.В.</b><span class="b b-am">Новый</span></div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:7px;">"Хочу записаться на PRP. Болит колено год. Цена?"</div>
+        <div style="display:flex;gap:5px;"><button class="btn bp xs" onclick="crmAI('zakh')">🤖 AI-ответ</button><button class="btn bg xs" onclick="openM('m-newvisit')">Записать</button></div>
+      </div>
+      <div style="padding:12px;background:#f8f9ff;border-radius:10px;border-left:3px solid var(--red);margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><b>Гришин А.К.</b><span class="b b-re">Срочно</span></div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:7px;">"Боль 4 дня после PRP. Нормально?"</div>
+        <div style="display:flex;gap:5px;"><button class="btn bd xs" onclick="crmAI('grish')">⚡ AI-ответ</button><button class="btn bg xs">☎ Позвонить</button></div>
+      </div>
+      <div id="crm-rz" style="display:none;padding:12px;background:var(--blue-l);border-radius:10px;border:1px solid rgba(74,108,247,.2);">
+        <div style="font-size:10px;font-weight:700;color:var(--blue2);margin-bottom:5px;">🤖 AI-ответ готов:</div>
+        <div id="crm-rt" style="font-size:12px;color:var(--text);line-height:1.65;"></div>
+        <div style="display:flex;gap:5px;margin-top:8px;"><button class="btn bp xs" onclick="toast('📱 Отправлено в WhatsApp')">📱 WhatsApp</button><button class="btn bg xs" onclick="document.getElementById('crm-rz').style.display='none'">✕</button></div>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:11px;">
+        <div class="ch"><span class="ct">Автонапоминания</span></div>
+        <div class="pc"><div class="pi" style="background:var(--blue-l);">📅</div><div style="flex:1;"><div style="font-size:12px;font-weight:600;">Смирнова Е.А.</div><div style="font-size:11px;color:var(--text3);">PRP №1 — 20.03 10:00</div></div><span class="b b-mi">✓ Отправлено</span></div>
+        <div class="pc"><div class="pi" style="background:rgba(245,158,11,.1);">⏰</div><div style="flex:1;"><div style="font-size:12px;font-weight:600;">Козлов В.Н.</div><div style="font-size:11px;color:var(--text3);">PRP №2 — Сегодня 10:30</div></div><button class="btn bg xs" onclick="toast('📱 Отправлено')">Напомнить</button></div>
+      </div>
+      <div class="card">
+        <div class="ct">Воронка пациентов</div>
+        <div class="bc" style="margin-top:8px;">
+          <div class="br2"><div class="blab">Первичные</div><div class="btr"><div class="bfl" style="width:100%;background:linear-gradient(90deg,var(--blue),var(--lav));"></div></div><div class="bvl">142</div></div>
+          <div class="br2"><div class="blab">Повторные</div><div class="btr"><div class="bfl" style="width:68%;background:linear-gradient(90deg,var(--mint),#4a6cf7);"></div></div><div class="bvl">97</div></div>
+          <div class="br2"><div class="blab">Постоянные</div><div class="btr"><div class="bfl" style="width:38%;background:linear-gradient(90deg,var(--rose),var(--rose2));"></div></div><div class="bvl">54</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ШАБЛОНЫ ПРОТОКОЛОВ -->
+<div class="page" id="p-tpl">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div><div style="font-family:var(--serif);font-size:20px;font-weight:600;">Шаблоны протоколов</div><div style="font-size:12px;color:var(--text3);">Готовые шаблоны + AI-заполнение</div></div>
+    <button class="btn bp" id="btn-tpl" onclick="toast('Создание нового шаблона')">＋ Новый шаблон</button>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct" style="margin-bottom:11px;">Выберите шаблон</div>
+      <div class="tplcard sel" onclick="loadTpl(this,'ortho')"><div class="tplh"><div class="tpli" style="background:var(--blue-l);">🩺</div><div><div class="tpln">Первичный осмотр ортопеда</div><div class="tpld">Полный протокол первичного приёма</div></div></div></div>
+      <div class="tplcard" onclick="loadTpl(this,'prp')"><div class="tplh"><div class="tpli" style="background:#e2e8f0;">💉</div><div><div class="tpln">Протокол PRP-терапии</div><div class="tpld">Забор крови, центрифугирование, введение</div></div></div></div>
+      <div class="tplcard" onclick="loadTpl(this,'uzi_knee')"><div class="tplh"><div class="tpli" style="background:var(--rose-l);">🔬</div><div><div class="tpln">УЗИ коленного сустава</div><div class="tpld">Щель, хрящ, синовия, выпот, мениски</div></div></div></div>
+      <div class="tplcard" onclick="loadTpl(this,'uzi_shoulder')"><div class="tplh"><div class="tpli" style="background:var(--rose-l);">🔬</div><div><div class="tpln">УЗИ плечевого сустава</div><div class="tpld">Ротаторная манжета, AC-сустав, бурса</div></div></div></div>
+      <div class="tplcard" onclick="loadTpl(this,'uzi_hip')"><div class="tplh"><div class="tpli" style="background:var(--rose-l);">🔬</div><div><div class="tpln">УЗИ тазобедренного сустава</div><div class="tpld">Хрящ, выпот, периартикулярные ткани</div></div></div></div>
+      <div class="tplcard" onclick="loadTpl(this,'pod')"><div class="tplh"><div class="tpli" style="background:rgba(245,158,11,.1);">🦶</div><div><div class="tpln">Подологический осмотр</div><div class="tpld">Кожа, ногти, деформации, манипуляции</div></div></div></div>
+      <div class="tplcard" onclick="loadTpl(this,'rehab')"><div class="tplh"><div class="tpli" style="background:rgba(139,92,246,.1);">🏃</div><div><div class="tpln">Индивидуальный план реабилитации</div><div class="tpld">3 этапа, упражнения, ограничения</div></div></div></div>
+      <div class="tplcard" onclick="loadTpl(this,'epicrisis')"><div class="tplh"><div class="tpli" style="background:rgba(56,189,248,.1);">📋</div><div><div class="tpln">Выписной эпикриз</div><div class="tpld">Итог лечения, рекомендации, наблюдение</div></div></div></div>
+      <div class="tplcard" onclick="loadTpl(this,'consent')"><div class="tplh"><div class="tpli" style="background:rgba(244,63,94,.08);">✍️</div><div><div class="tpln">Информированное согласие (PRP)</div><div class="tpld">Правовой документ для пациента</div></div></div></div>
+      <div class="tplcard" onclick="loadTpl(this,'memo')"><div class="tplh"><div class="tpli" style="background:#e2e8f0;">📱</div><div><div class="tpln">Памятка: подготовка к PRP</div><div class="tpld">Рассылка пациентам в WhatsApp</div></div></div></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:11px;">
+        <div class="ch">
+          <div><div class="ct" id="tpl-title">Первичный осмотр ортопеда</div><div style="font-size:11px;color:var(--text3);" id="tpl-desc">Полный протокол первичного приёма</div></div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn bg sm" onclick="copyTpl()">📋 Копировать</button>
+            <button class="btn bg sm" onclick="printProtocol()">🖨 Печать</button>
+            <button class="btn bw sm" onclick="saveDocx()">💾 DOCX</button>
+            <button class="btn bp sm" onclick="aiTplFill()">🤖 AI-заполнить</button>
+          </div>
+        </div>
+        <textarea id="tpl-body" style="background:#f8f9ff;border-radius:10px;padding:13px;font-size:11px;line-height:1.85;white-space:pre-wrap;color:#0f172a;width:100%;min-height:340px;border:1.5px solid #e2e8f0;resize:vertical;font-family:var(--mono);outline:none;" spellcheck="false"></textarea>
+      </div>
+      <div class="aip">
+        <div class="aih"><div class="aidot"></div><div class="aitl">AI — Шаблоны</div></div>
+        <div class="aim" id="m-tpl"><div class="am sys"><div class="amr">📝 Помощник</div>Выберите шаблон слева и нажмите «AI-заполнить» — сформирую готовый протокол для пациента.</div></div>
+        <div class="aif"><input class="aii" id="i-tpl" placeholder="Вопрос о шаблоне..." onkeydown="if(event.key==='Enter')aiSend('tpl')"><button class="ais" onclick="aiSend('tpl')">→</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DOCS -->
+<div class="page" id="p-docs">
+  <div style="margin-bottom:14px;font-family:var(--serif);font-size:20px;font-weight:600;">AI-генератор документов</div>
+  <div class="g2">
+    <div class="card">
+      <div class="fg"><label class="fl">Тип документа</label>
+        <select class="fc" id="doc-type">
+          <option>Протокол первичного осмотра ортопеда</option>
+          <option>Протокол PRP-терапии</option>
+          <option>Протокол УЗИ суставов</option>
+          <option>Выписной эпикриз</option>
+          <option>Памятка: подготовка к PRP</option>
+          <option>Индивидуальный план реабилитации</option>
+          <option>Информированное согласие на PRP</option>
+          <option>Направление к специалисту</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Пациент</label><select class="fc"><option>Смирнова Е.А.</option><option>Козлов В.Н.</option><option>Петров А.И.</option></select></div>
+      <div class="fg"><label class="fl">Дополнения для AI</label><textarea class="fc" id="doc-extra" rows="2" placeholder="Особые инструкции..."></textarea></div>
+      <button class="btn bp" onclick="genDoc()">🤖 Сгенерировать документ</button>
+      <div id="doc-out" style="display:none;margin-top:12px;">
+        <div class="al a-mi">✅ Документ сформирован AI</div>
+        <div id="doc-txt" style="background:#f8f9ff;border-radius:10px;padding:12px;font-size:11px;line-height:1.8;max-height:280px;overflow-y:auto;white-space:pre-wrap;font-family:var(--mono);color:var(--text2);border:1px solid var(--border);margin-top:7px;"></div>
+        <div style="display:flex;gap:7px;margin-top:8px;"><button class="btn bp sm" onclick="toast('📥 PDF сохранён')">📥 PDF</button><button class="btn bg sm" onclick="toast('📱 Отправлено')">📱 Отправить</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct" style="margin-bottom:11px;">Скрипты администратора</div>
+      <div class="pc"><div class="pi" style="background:var(--blue-l);">📞</div><div style="flex:1;"><div style="font-size:12px;font-weight:600;">Первичный звонок</div><div style="font-size:11px;color:var(--text3);">Запись нового пациента</div></div><button class="btn bg xs" onclick="openM('m-s1')">Открыть</button></div>
+      <div class="pc"><div class="pi" style="background:var(--rose-l);">💬</div><div style="flex:1;"><div style="font-size:12px;font-weight:600;">Вопрос о PRP</div><div style="font-size:11px;color:var(--text3);">Объяснение метода</div></div><button class="btn bg xs" onclick="openM('m-s2')">Открыть</button></div>
+      <div class="pc"><div class="pi" style="background:rgba(245,158,11,.1);">💰</div><div style="flex:1;"><div style="font-size:12px;font-weight:600;">Возражение «Дорого»</div><div style="font-size:11px;color:var(--text3);">Обработка ценового возражения</div></div><button class="btn bg xs" onclick="openM('m-s3')">Открыть</button></div>
+      <div class="pc"><div class="pi" style="background:rgba(74,108,247,.08);">📱</div><div style="flex:1;"><div style="font-size:12px;font-weight:600;">Памятка перед PRP</div><div style="font-size:11px;color:var(--text3);">WhatsApp-рассылка</div></div><button class="btn bg xs" onclick="toast('📱 Памятка отправлена')">Отправить</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYTICS -->
+<div class="page" id="p-analytics">
+  <div style="margin-bottom:14px;font-family:var(--serif);font-size:20px;font-weight:600;">Аналитика клиники</div>
+  <div class="g4" style="margin-bottom:13px;">
+    <div class="sc blue"><div class="sc-i">💰</div><div class="sc-v">₽287к</div><div class="sc-l">Выручка / март</div><div class="sc-s">↑ +12%</div></div>
+    <div class="sc rose"><div class="sc-i">👥</div><div class="sc-v">142</div><div class="sc-l">Пациентов</div><div class="sc-s">↑ +8</div></div>
+    <div class="sc mint"><div class="sc-i">🔄</div><div class="sc-v">68%</div><div class="sc-l">Повторных</div><div class="sc-s">↑ +3%</div></div>
+    <div class="sc purple"><div class="sc-i">⭐</div><div class="sc-v">4.9</div><div class="sc-l">NPS</div><div class="sc-s">из 5.0</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">KPI врача — Иванов П.С.</span></div>
+      <div class="bc">
+        <div class="br2"><div class="blab">Загрузка</div><div class="btr"><div class="bfl" style="width:87%;background:linear-gradient(90deg,var(--blue),var(--lav));"></div></div><div class="bvl">87%</div></div>
+        <div class="br2"><div class="blab">NPS врача</div><div class="btr"><div class="bfl" style="width:96%;background:linear-gradient(90deg,var(--mint),#4a6cf7);"></div></div><div class="bvl">4.8/5</div></div>
+        <div class="br2"><div class="blab">Конверсия</div><div class="btr"><div class="bfl" style="width:82%;background:linear-gradient(90deg,var(--rose),var(--rose2));"></div></div><div class="bvl">82%</div></div>
+        <div class="br2"><div class="blab">Повторные</div><div class="btr"><div class="bfl" style="width:68%;background:linear-gradient(90deg,var(--amber),#fbbf24);"></div></div><div class="bvl">68%</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">Топ диагнозов МКБ-10</span></div>
+      <div class="bc">
+        <div class="br2"><div class="blab">M17 Гонартроз</div><div class="btr"><div class="bfl" style="width:80%;background:linear-gradient(90deg,var(--blue),var(--lav));"></div></div><div class="bvl">38 пац.</div></div>
+        <div class="br2"><div class="blab">M16 Коксартроз</div><div class="btr"><div class="bfl" style="width:55%;background:linear-gradient(90deg,var(--sky),#38bdf8);"></div></div><div class="bvl">26 пац.</div></div>
+        <div class="br2"><div class="blab">M75 Плечо</div><div class="btr"><div class="bfl" style="width:38%;background:linear-gradient(90deg,var(--mint),#4a6cf7);"></div></div><div class="bvl">18 пац.</div></div>
+        <div class="br2"><div class="blab">M77 Тендин.</div><div class="btr"><div class="bfl" style="width:22%;background:linear-gradient(90deg,var(--rose),var(--rose2));"></div></div><div class="bvl">10 пац.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STOCK -->
+<div class="page" id="p-stock">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div style="font-family:var(--serif);font-size:20px;font-weight:600;">Склад</div>
+    <button class="btn bp" id="btn-stock" onclick="openM('m-addstock')">＋ Приход</button>
+  </div>
+  <div class="card">
+    <table><thead><tr><th>Наименование</th><th>Партия</th><th>Срок годности</th><th>Остаток</th><th>Статус</th></tr></thead><tbody>
+      <tr><td><b>Пробирки PRP Regen Lab</b></td><td>RL-2025-0847</td><td>12.2026</td><td>24 шт.</td><td><span class="b b-mi">✓ В наличии</span></td></tr>
+      <tr><td><b>Иглы 21G</b></td><td>—</td><td>06.2027</td><td>48 шт.</td><td><span class="b b-mi">✓ В наличии</span></td></tr>
+      <tr><td><b>Хлоргексидин 0.05%</b></td><td>—</td><td>08.2026</td><td>3 фл.</td><td><span class="b b-am">⚠ Заканчивается</span></td></tr>
+      <tr><td><b>Перчатки стерильные №7</b></td><td>—</td><td>01.2027</td><td>2 уп.</td><td><span class="b b-re">❗ Срочно заказать</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<!-- SCHEDULE -->
+<div class="page" id="p-sched">
+<style>
+.sched-wrap{display:flex;flex-direction:column;gap:0;height:calc(100vh - 120px);min-height:600px;}
+.sched-toolbar{display:flex;align-items:center;gap:8px;padding:12px 16px;background:#fff;border:1px solid var(--border);border-radius:12px 12px 0 0;flex-wrap:wrap;}
+.sched-nav{display:flex;align-items:center;gap:6px;}
+.sched-nav button{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:var(--text2);}
+.sched-nav button:hover{background:var(--blue-l);}
+.sched-period{font-family:var(--serif);font-size:15px;font-weight:600;color:var(--text1);min-width:160px;text-align:center;}
+.sched-view-btns{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.sched-view-btns button{padding:5px 12px;border:none;background:#fff;cursor:pointer;font-size:12px;color:var(--text2);border-right:1px solid var(--border);}
+.sched-view-btns button:last-child{border-right:none;}
+.sched-view-btns button.on{background:var(--blue);color:#fff;}
+.sched-filters{display:flex;gap:6px;margin-left:auto;}
+.sched-filters select{padding:5px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff;}
+.sched-body{display:flex;flex:1;overflow:hidden;border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;background:#fff;}
+.sched-time-col{width:54px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;background:#fafafa;}
+.sched-time-col::-webkit-scrollbar{width:0;}
+.sched-time-slot{height:48px;display:flex;align-items:flex-start;justify-content:center;padding-top:4px;font-size:10px;color:var(--text3);border-bottom:1px solid #f1f5f9;flex-shrink:0;}
+.sched-grid{display:flex;flex:1;overflow:hidden;}
+.sched-col{flex:1;border-right:1px solid var(--border);display:flex;flex-direction:column;min-width:100px;}
+.sched-col:last-child{border-right:none;}
+.sched-col-head{padding:8px 6px;background:#f8fafc;border-bottom:1px solid var(--border);text-align:center;flex-shrink:0;}
+.sched-col-head .day-name{font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;}
+.sched-col-head .day-num{font-size:20px;font-weight:700;color:var(--text1);line-height:1;}
+.sched-col-head.today .day-num{color:#fff;background:var(--blue);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;margin:0 auto;}
+.sched-col-body{flex:1;overflow-y:auto;position:relative;}
+.sched-col-body::-webkit-scrollbar{width:3px;}
+.sched-col-body::-webkit-scrollbar-thumb{background:var(--border);}
+.sched-slot{height:48px;border-bottom:1px solid #f8fafc;position:relative;cursor:pointer;}
+.sched-slot:hover{background:#f0f4ff;}
+.sched-appt{position:absolute;left:3px;right:3px;border-radius:6px;padding:3px 6px;font-size:10px;cursor:pointer;overflow:hidden;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.sched-appt .ap-time{font-weight:700;font-size:9px;opacity:.8;}
+.sched-appt .ap-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sched-appt .ap-svc{opacity:.75;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sched-appt.st-wait{background:#fef9c3;border-left:3px solid #f59e0b;color:#78350f;}
+.sched-appt.st-conf{background:#dbeafe;border-left:3px solid #3b82f6;color:#1e3a5f;}
+.sched-appt.st-here{background:#dcfce7;border-left:3px solid #22c55e;color:#14532d;}
+.sched-appt.st-done{background:#f1f5f9;border-left:3px solid #94a3b8;color:#475569;}
+.sched-appt.st-cancel{background:#fee2e2;border-left:3px solid #ef4444;color:#7f1d1d;opacity:.6;}
+.sched-legend{display:flex;gap:12px;padding:8px 16px;font-size:11px;color:var(--text3);background:#f8fafc;border-top:1px solid var(--border);flex-wrap:wrap;}
+.sched-legend span{display:flex;align-items:center;gap:4px;}
+.sched-legend i{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.appt-popup{position:fixed;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:1000;min-width:260px;max-width:320px;padding:0;overflow:hidden;}
+.appt-popup-head{padding:12px 16px;font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center;}
+.appt-popup-body{padding:12px 16px;border-top:1px solid var(--border);}
+.appt-popup-row{display:flex;gap:8px;margin-bottom:7px;font-size:12px;}
+.appt-popup-row .lbl{color:var(--text3);width:80px;flex-shrink:0;}
+.appt-popup-actions{display:flex;gap:6px;padding:10px 16px;border-top:1px solid var(--border);flex-wrap:wrap;}
+</style>
+
+<div class="sched-wrap">
+  <!-- Toolbar -->
+  <div class="sched-toolbar">
+    <div class="sched-nav">
+      <button onclick="schedNav(-1)">‹</button>
+      <button onclick="schedToday()" style="font-size:11px;">Сегодня</button>
+      <button onclick="schedNav(1)">›</button>
+    </div>
+    <div class="sched-period" id="sched-period-label">—</div>
+    <div class="sched-view-btns">
+      <button class="on" id="sv-day" onclick="schedSetView('day',this)">День</button>
+      <button id="sv-week" onclick="schedSetView('week',this)">Неделя</button>
+      <button id="sv-month" onclick="schedSetView('month',this)">Месяц</button>
+    </div>
+    <div class="sched-filters">
+      <select id="sf-doc" onchange="renderSched()" style="max-width:160px;">
+        <option value="">Все врачи</option>
+        <option>Шкарпов А.А.</option>
+        <option>Жильцова Н.М.</option>
+        <option>Массажист В.П.</option>
+      </select>
+      <select id="sf-status" onchange="renderSched()">
+        <option value="">Все статусы</option>
+        <option value="wait">Ожидает</option>
+        <option value="conf">Подтверждён</option>
+        <option value="here">Пришёл</option>
+        <option value="done">Завершён</option>
+        <option value="cancel">Отменён</option>
+      </select>
+    </div>
+    <button class="btn bp" onclick="openNewVisit()" style="margin-left:auto;">＋ Запись</button>
+  </div>
+
+  <!-- Grid -->
+  <div class="sched-body">
+    <div class="sched-time-col" id="sched-time-col"></div>
+    <div class="sched-grid" id="sched-grid"></div>
+  </div>
+
+  <!-- Legend -->
+  <div class="sched-legend">
+    <span><i style="background:#f59e0b;"></i>Ожидает</span>
+    <span><i style="background:#3b82f6;"></i>Подтверждён</span>
+    <span><i style="background:#22c55e;"></i>Пришёл</span>
+    <span><i style="background:#94a3b8;"></i>Завершён</span>
+    <span><i style="background:#ef4444;"></i>Отменён</span>
+    <span id="sched-count" style="margin-left:auto;color:var(--text2);font-weight:600;"></span>
+  </div>
+</div>
+
+<!-- Appointment popup -->
+<div class="appt-popup" id="appt-popup" style="display:none;">
+  <div class="appt-popup-head">
+    <span id="pp-name">—</span>
+    <button onclick="closeApptPopup()" style="border:none;background:none;cursor:pointer;font-size:16px;color:var(--text3);">✕</button>
+  </div>
+  <div class="appt-popup-body">
+    <div class="appt-popup-row"><span class="lbl">Время:</span><span id="pp-time">—</span></div>
+    <div class="appt-popup-row"><span class="lbl">Услуга:</span><span id="pp-svc">—</span></div>
+    <div class="appt-popup-row"><span class="lbl">Врач:</span><span id="pp-doc">—</span></div>
+    <div class="appt-popup-row"><span class="lbl">Статус:</span><span id="pp-status">—</span></div>
+    <div class="appt-popup-row"><span class="lbl">Примечание:</span><span id="pp-note">—</span></div>
+  </div>
+  <div class="appt-popup-actions">
+    <select id="pp-status-sel" onchange="changeApptStatus()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:11px;flex:1;">
+      <option value="wait">Ожидает</option>
+      <option value="conf">Подтверждён</option>
+      <option value="here">Пришёл</option>
+      <option value="done">Завершён</option>
+      <option value="cancel">Отменён</option>
+    </select>
+    <button class="btn bp" style="font-size:11px;" onclick="openProtocol()">📋 Протокол</button>
+    <button class="btn bd" style="font-size:11px;" onclick="deleteAppt()">Удалить</button>
+  </div>
+</div>
+
+<!-- ═══ ПЛАНЫ ЛЕЧЕНИЯ ═══ -->
+<div class="page" id="p-plans">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div><div style="font-family:var(--serif);font-size:20px;font-weight:600;">Планы лечения</div>
+    <div style="font-size:12px;color:var(--text3);">Курсовое ведение пациентов</div></div>
+    <button class="btn bp" onclick="openM('m-addplan')">＋ Новый план</button>
+  </div>
+  <div class="g3" style="margin-bottom:14px;">
+    <div class="sc" style="background:linear-gradient(135deg,#4a6cf7,#818cf8);color:#fff;"><div class="sc-i">📋</div><div class="sc-v" id="pl-total">0</div><div class="sc-l">Активных планов</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;"><div class="sc-i">✅</div><div class="sc-v" id="pl-done">0</div><div class="sc-l">Завершены</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;"><div class="sc-i">⏳</div><div class="sc-v" id="pl-prog">0</div><div class="sc-l">В процессе</div></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;gap:9px;margin-bottom:13px;flex-wrap:wrap;">
+      <input class="fc" style="max-width:240px;" placeholder="🔍 Поиск пациента..." id="pl-search" oninput="renderPlans()">
+      <select class="sel" style="width:160px;" id="pl-filter" onchange="renderPlans()">
+        <option value="">Все статусы</option>
+        <option value="Активный">Активный</option>
+        <option value="В процессе">В процессе</option>
+        <option value="Завершён">Завершён</option>
+      </select>
+    </div>
+    <div id="pl-empty" style="text-align:center;padding:32px;color:var(--text3);display:none;"><div style="font-size:32px;margin-bottom:9px;">📋</div>Планов лечения нет</div>
+    <div id="pl-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+</div>
+
+<!-- ═══ КАССА ═══ -->
+<div class="page" id="p-kassa">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div><div style="font-family:var(--serif);font-size:20px;font-weight:600;">Касса и оплата</div>
+    <div style="font-size:12px;color:var(--text3);" id="kassa-date"></div></div>
+    <button class="btn bp" onclick="openM('m-addpay')">＋ Принять оплату</button>
+  </div>
+  <div class="g4" style="margin-bottom:14px;">
+    <div class="sc" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;"><div class="sc-i">💰</div><div class="sc-v" id="ks-day">0 ₽</div><div class="sc-l">Сегодня</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#4a6cf7,#818cf8);color:#fff;"><div class="sc-i">📅</div><div class="sc-v" id="ks-month">0 ₽</div><div class="sc-l">Месяц</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;"><div class="sc-i">🧾</div><div class="sc-v" id="ks-cnt">0</div><div class="sc-l">Чеков сегодня</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:#fff;"><div class="sc-i">💳</div><div class="sc-v" id="ks-avg">0 ₽</div><div class="sc-l">Средний чек</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">Операции сегодня</span></div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr><th>Время</th><th>Пациент</th><th>Услуга</th><th>Сумма</th><th>Тип</th><th></th></tr></thead>
+        <tbody id="kassa-tbody"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3);">Операций нет</td></tr></tbody>
+      </table>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:11px;">
+        <div class="ct">Способы оплаты (месяц)</div>
+        <div id="kassa-methods" style="margin-top:8px;">
+          <div class="br2"><div class="blab">Наличные</div><div class="btr"><div class="bfl" id="pm-cash" style="width:0%;background:linear-gradient(90deg,#10b981,#34d399);"></div></div><div class="bvl" id="pm-cash-v">0 ₽</div></div>
+          <div class="br2"><div class="blab">Карта/Эквайринг</div><div class="btr"><div class="bfl" id="pm-card" style="width:0%;background:linear-gradient(90deg,#4a6cf7,#818cf8);"></div></div><div class="bvl" id="pm-card-v">0 ₽</div></div>
+          <div class="br2"><div class="blab">Безнал</div><div class="btr"><div class="bfl" id="pm-bank" style="width:0%;background:linear-gradient(90deg,#f59e0b,#fbbf24);"></div></div><div class="bvl" id="pm-bank-v">0 ₽</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct">Долги и задолженности</div>
+        <div id="debts-list" style="font-size:12px;padding:8px 0;color:var(--text3);">Задолженностей нет</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ЗАРПЛАТА ═══ -->
+<div class="page" id="p-salary">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div><div style="font-family:var(--serif);font-size:20px;font-weight:600;">Зарплата сотрудников</div>
+    <div style="font-size:12px;color:var(--text3);">Расчёт и начисления</div></div>
+    <div style="display:flex;gap:7px;">
+      <select class="sel" id="sal-month" style="width:150px;" onchange="renderSalary()">
+        <option value="03.2026">Март 2026</option>
+        <option value="02.2026">Февраль 2026</option>
+        <option value="01.2026">Январь 2026</option>
+      </select>
+      <button class="btn bp" onclick="openM('m-salset')">⚙ Настройки</button>
+    </div>
+  </div>
+  <div class="g3" style="margin-bottom:14px;">
+    <div class="sc" style="background:linear-gradient(135deg,#4a6cf7,#818cf8);color:#fff;"><div class="sc-i">💵</div><div class="sc-v" id="sal-total">0 ₽</div><div class="sc-l">ФОТ за месяц</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;"><div class="sc-i">👥</div><div class="sc-v" id="sal-cnt">0</div><div class="sc-l">Сотрудников</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;"><div class="sc-i">📊</div><div class="sc-v" id="sal-avg">0 ₽</div><div class="sc-l">Средняя зарплата</div></div>
+  </div>
+  <div class="card">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead><tr><th>Сотрудник</th><th>Должность</th><th>Ставка/схема</th><th>Приёмов</th><th>% выручки</th><th>Начислено</th><th>Статус</th><th></th></tr></thead>
+      <tbody id="sal-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ ПРОГРАММА ЛОЯЛЬНОСТИ ═══ -->
+<div class="page" id="p-loyalty">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div><div style="font-family:var(--serif);font-size:20px;font-weight:600;">Программа лояльности</div>
+    <div style="font-size:12px;color:var(--text3);">Бонусы, скидки, удержание пациентов</div></div>
+    <button class="btn bp" onclick="openM('m-addbonus')">＋ Начислить бонусы</button>
+  </div>
+  <div class="g4" style="margin-bottom:14px;">
+    <div class="sc" style="background:linear-gradient(135deg,#f43f5e,#fb923c);color:#fff;"><div class="sc-i">🏅</div><div class="sc-v" id="loy-members">0</div><div class="sc-l">Участников</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#4a6cf7,#818cf8);color:#fff;"><div class="sc-i">💎</div><div class="sc-v" id="loy-bonus">0</div><div class="sc-l">Бонусов выдано</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;"><div class="sc-i">🔄</div><div class="sc-v" id="loy-return">0%</div><div class="sc-l">Возвращаемость</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:#fff;"><div class="sc-i">⭐</div><div class="sc-v" id="loy-avg">0</div><div class="sc-l">Ср. баллов/пациент</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">Уровни лояльности</span><button class="btn bg xs" onclick="openM('m-loylevels')">⚙ Настроить</button></div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;" id="loy-levels">
+        <div style="padding:12px;border-radius:10px;border:1.5px solid #fde68a;background:#fffbeb;display:flex;align-items:center;gap:10px;">
+          <div style="font-size:22px;">🥉</div><div style="flex:1;"><div style="font-weight:700;font-size:13px;">Стандарт</div><div style="font-size:11px;color:var(--text3);">0–3 посещения · скидка 0%</div></div><div style="font-size:12px;font-weight:700;" id="loy-std">0 пациентов</div></div>
+        <div style="padding:12px;border-radius:10px;border:1.5px solid #cbd5e1;background:#f8fafc;display:flex;align-items:center;gap:10px;">
+          <div style="font-size:22px;">🥈</div><div style="flex:1;"><div style="font-weight:700;font-size:13px;">Серебро</div><div style="font-size:11px;color:var(--text3);">4–9 посещений · скидка 5%</div></div><div style="font-size:12px;font-weight:700;" id="loy-sil">0 пациентов</div></div>
+        <div style="padding:12px;border-radius:10px;border:1.5px solid #fbbf24;background:#fffbeb;display:flex;align-items:center;gap:10px;">
+          <div style="font-size:22px;">🥇</div><div style="flex:1;"><div style="font-weight:700;font-size:13px;">Золото</div><div style="font-size:11px;color:var(--text3);">10+ посещений · скидка 10%</div></div><div style="font-size:12px;font-weight:700;" id="loy-gold">0 пациентов</div></div>
+        <div style="padding:12px;border-radius:10px;border:1.5px solid #c4b5fd;background:rgba(139,92,246,.06);display:flex;align-items:center;gap:10px;">
+          <div style="font-size:22px;">💎</div><div style="flex:1;"><div style="font-weight:700;font-size:13px;">VIP</div><div style="font-size:11px;color:var(--text3);">20+ посещений · скидка 15%</div></div><div style="font-size:12px;font-weight:700;" id="loy-vip">0 пациентов</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct">Топ пациентов по баллам</span></div>
+      <div id="loy-top" style="font-size:12px;margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ЗАДАЧИ CRM ═══ -->
+<div class="page" id="p-tasks">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div><div style="font-family:var(--serif);font-size:20px;font-weight:600;">Задачи</div>
+    <div style="font-size:12px;color:var(--text3);">CRM — контроль и поручения</div></div>
+    <button class="btn bp" onclick="openM('m-addtask')">＋ Новая задача</button>
+  </div>
+  <div class="g4" style="margin-bottom:14px;">
+    <div class="sc" style="background:linear-gradient(135deg,#ef4444,#f87171);color:#fff;"><div class="sc-i">🔥</div><div class="sc-v" id="tk-urgent">0</div><div class="sc-l">Срочных</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;"><div class="sc-i">⏰</div><div class="sc-v" id="tk-today">0</div><div class="sc-l">На сегодня</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#4a6cf7,#818cf8);color:#fff;"><div class="sc-i">📋</div><div class="sc-v" id="tk-open">0</div><div class="sc-l">Открытых</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;"><div class="sc-i">✅</div><div class="sc-v" id="tk-done">0</div><div class="sc-l">Выполнено</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">Активные задачи</span>
+        <div style="display:flex;gap:5px;">
+          <select class="sel" style="font-size:11px;padding:4px 8px;" id="tk-filter" onchange="renderTasks()">
+            <option value="">Все</option><option value="Срочно">Срочно</option><option value="Важно">Важно</option><option value="Обычное">Обычное</option>
+          </select>
+        </div>
+      </div>
+      <div id="tk-list" style="margin-top:8px;display:flex;flex-direction:column;gap:7px;"></div>
+      <div id="tk-empty" style="text-align:center;padding:24px;color:var(--text3);display:none;"><div style="font-size:28px;margin-bottom:8px;">✅</div>Задач нет</div>
+    </div>
+    <div class="card">
+      <div class="ct">По исполнителям</div>
+      <div id="tk-by-user" style="margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ УМНАЯ ЗАБОТА ═══ -->
+<div class="page" id="p-care">
+  <div style="margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div style="font-family:var(--serif);font-size:20px;font-weight:600;">Умная забота</div>
+        <div style="font-size:12px;color:var(--text3);">Автоматические сценарии работы с пациентами</div>
+      </div>
+      <button class="btn bg" onclick="openBulkNotif()">📢 Массовая рассылка</button>
+    </div>
+  </div>
+  <div class="g4" style="margin-bottom:14px;">
+    <div class="sc" style="background:linear-gradient(135deg,#4a6cf7,#818cf8);color:#fff;"><div class="sc-i">🤖</div><div class="sc-v" id="care-active">0</div><div class="sc-l">Активных сценариев</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;"><div class="sc-i">📨</div><div class="sc-v" id="care-sent">0</div><div class="sc-l">Отправлено сегодня</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;"><div class="sc-i">🔄</div><div class="sc-v" id="care-return">0%</div><div class="sc-l">Возврат пациентов</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#f43f5e,#fb923c);color:#fff;"><div class="sc-i">⭐</div><div class="sc-v" id="care-rating">0</div><div class="sc-l">Ср. оценка</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct">Сценарии</span><button class="btn bp xs" onclick="openM('m-addscenario')">＋ Сценарий</button></div>
+      <div id="scenarios-list" style="margin-top:8px;display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:11px;">
+        <div class="ct">Ближайшие отправки</div>
+        <div id="care-upcoming" style="margin-top:8px;font-size:12px;"></div>
+      </div>
+      <div class="card">
+        <div class="ct">AI-составление сообщений</div>
+        <div class="aip" style="margin-top:8px;">
+          <div class="aih"><div class="aidot"></div><div class="aitl">AI Коммуникации</div></div>
+          <div class="aim" id="m-care" style="min-height:100px;"><div class="am sys"><div class="amr">💬</div>Опишите ситуацию — составлю сообщение пациенту.</div></div>
+          <div class="aif"><input class="aii" id="i-care" placeholder="Напр.: пациент не был 3 мес, нужно вернуть..." onkeydown="if(event.key==='Enter')aiSend('care')"><button class="ais" onclick="aiSend('care')">→</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ОТЧЁТЫ РУКОВОДИТЕЛЯ ═══ -->
+<div class="page" id="p-reports">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div><div style="font-family:var(--serif);font-size:20px;font-weight:600;">Отчёты</div>
+    <div style="font-size:12px;color:var(--text3);">Управленческая аналитика и KPI</div></div>
+    <div style="display:flex;gap:7px;">
+      <select class="sel" style="width:150px;" id="rep-period" onchange="renderReports()">
+        <option value="month">Март 2026</option><option value="prev">Февраль 2026</option><option value="quarter">I кв. 2026</option>
+      </select>
+      <div style="position:relative;display:inline-block;" id="export-menu-wrap">
+        <button class="btn bw" onclick="toggleExportMenu()">📊 Экспорт Excel ▾</button>
+        <div id="export-menu" style="display:none;position:absolute;right:0;top:36px;background:#fff;border:1.5px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:999;min-width:220px;overflow:hidden;">
+          <div onclick="exportExcelFinance();toggleExportMenu()" style="padding:10px 16px;cursor:pointer;font-size:12px;font-weight:600;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;"><span>📊</span>Полный финансовый отчёт</div>
+          <div onclick="exportExcelPatients();toggleExportMenu()" style="padding:10px 16px;cursor:pointer;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;"><span>👥</span>База пациентов</div>
+          <div onclick="exportExcelSchedule();toggleExportMenu()" style="padding:10px 16px;cursor:pointer;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;"><span>📅</span>Журнал записей</div>
+          <div onclick="exportExcelStock();toggleExportMenu()" style="padding:10px 16px;cursor:pointer;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;"><span>📦</span>Склад</div>
+          <div onclick="exportExcelSalary();toggleExportMenu()" style="padding:10px 16px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;"><span>💸</span>Зарплатная ведомость</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="g4" style="margin-bottom:14px;">
+    <div class="sc" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff;"><div class="sc-i">💰</div><div class="sc-v" id="rep-rev">0 ₽</div><div class="sc-l">Выручка</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#4a6cf7,#818cf8);color:#fff;"><div class="sc-i">👥</div><div class="sc-v" id="rep-pts">0</div><div class="sc-l">Пациентов</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;"><div class="sc-i">📊</div><div class="sc-v" id="rep-avg-check">0 ₽</div><div class="sc-l">Средний чек</div></div>
+    <div class="sc" style="background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:#fff;"><div class="sc-i">🔄</div><div class="sc-v" id="rep-return">0%</div><div class="sc-l">Возвращаемость</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct">Выручка по услугам</div>
+      <div id="rep-by-svc" style="margin-top:8px;"></div>
+    </div>
+    <div class="card">
+      <div class="ct">KPI сотрудников</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:8px;">
+        <thead><tr><th>Сотрудник</th><th>Приёмов</th><th>Выручка</th><th>Ср.чек</th><th>KPI</th></tr></thead>
+        <tbody id="rep-kpi-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="g2" style="margin-top:11px;">
+    <div class="card">
+      <div class="ct">Источники пациентов</div>
+      <div id="rep-sources" style="margin-top:8px;"></div>
+    </div>
+    <div class="card">
+      <div class="ct">Диагнозы (ТОП-10)</div>
+      <div id="rep-diags" style="margin-top:8px;"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:11px;">
+    <div class="ch"><span class="ct">AI-анализ периода</span><button class="btn bp xs" onclick="aiReportAnalysis()">🤖 Сгенерировать анализ</button></div>
+    <div id="rep-ai-out" style="font-size:12px;line-height:1.7;margin-top:8px;color:var(--text3);">Нажмите «Сгенерировать» для AI-анализа показателей клиники.</div>
+  </div>
+</div>
+
+<!-- ═══ ВОРОНКА ПРОДАЖ ═══ -->
+<div class="page" id="p-funnel">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div><div style="font-family:var(--serif);font-size:20px;font-weight:600;">CRM — Воронка</div>
+    <div style="font-size:12px;color:var(--text3);">Конверсия и путь пациента</div></div>
+    <button class="btn bp" onclick="openM('m-addlead')">＋ Новый лид</button>
+  </div>
+  <div style="display:flex;gap:11px;overflow-x:auto;padding-bottom:10px;" id="funnel-board">
+    <!-- Columns rendered by JS -->
+  </div>
+</div>
+
+
+<!-- USERS - FULL CRUD -->
+<div class="page" id="p-users">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div>
+      <div style="font-family:var(--serif);font-size:20px;font-weight:600;">Управление пользователями</div>
+      <div style="font-size:12px;color:var(--text3);" id="usr-count">Загрузка...</div>
+    </div>
+    <button class="btn bp" onclick="openM('m-adduser')">＋ Добавить пользователя</button>
+  </div>
+  <div class="al a-pu" style="margin-bottom:13px;">🔐 Раздел доступен только Руководителю. Полный контроль над учётными записями и правами доступа.</div>
+
+  <div class="card" style="margin-bottom:13px;">
+    <div class="ct" style="margin-bottom:12px;">Сотрудники клиники</div>
+    <div id="usr-list"></div>
+    <div id="usr-empty" style="display:none;text-align:center;padding:30px;color:var(--text3);">
+      <div style="font-size:32px;margin-bottom:8px;">👤</div>
+      <div style="font-size:13px;font-weight:600;">Нет сотрудников</div>
+      <div style="font-size:12px;margin-top:4px;">Добавьте первого пользователя</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct" style="margin-bottom:12px;">Матрица прав доступа</div>
+    <table><thead><tr><th>Модуль</th><th>👑 Руководитель</th><th>🩺 Врач</th><th>📋 Администратор</th></tr></thead><tbody>
+      <tr><td>Дашборд</td><td><span class="b b-mi">Полный</span></td><td><span class="b b-mi">Полный</span></td><td><span class="b b-am">Частичный</span></td></tr>
+      <tr><td>База пациентов</td><td><span class="b b-mi">Полный</span></td><td><span class="b b-mi">Полный</span></td><td><span class="b b-bl">Просмотр</span></td></tr>
+      <tr><td>ЭМК / Протоколы</td><td><span class="b b-mi">Полный</span></td><td><span class="b b-mi">Полный</span></td><td><span class="b b-re">Нет доступа</span></td></tr>
+      <tr><td>PRP / УЗИ / Подология</td><td><span class="b b-mi">Полный</span></td><td><span class="b b-mi">Полный</span></td><td><span class="b b-re">Нет доступа</span></td></tr>
+      <tr><td>CRM / Расписание</td><td><span class="b b-mi">Полный</span></td><td><span class="b b-am">Частичный</span></td><td><span class="b b-mi">Полный</span></td></tr>
+      <tr><td>Шаблоны протоколов</td><td><span class="b b-mi">Полный</span></td><td><span class="b b-mi">Полный</span></td><td><span class="b b-re">Нет доступа</span></td></tr>
+      <tr><td>Аналитика / KPI</td><td><span class="b b-mi">Полный</span></td><td><span class="b b-re">Нет доступа</span></td><td><span class="b b-re">Нет доступа</span></td></tr>
+      <tr><td>Склад</td><td><span class="b b-mi">Полный</span></td><td><span class="b b-am">Просмотр</span></td><td><span class="b b-am">Приход</span></td></tr>
+      <tr><td>Пользователи</td><td><span class="b b-mi">Полный</span></td><td><span class="b b-re">Нет доступа</span></td><td><span class="b b-re">Нет доступа</span></td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+
+<!-- MODALS -->
+
+<!-- ═══ УВЕДОМЛЕНИЕ ПАЦИЕНТУ ═══ -->
+<div class="ov" id="m-notif"><div class="modal" style="width:620px;max-height:90vh;overflow-y:auto;">
+  <div class="mh">📱 Отправить уведомление — <span id="notif-pt-name"></span></div>
+  <div style="display:flex;gap:14px;margin-bottom:12px;">
+    <label style="font-size:12px;font-weight:600;cursor:pointer;">
+      <input type="radio" name="notif-channel" value="whatsapp" checked onchange="renderNotifPreview()"> 📱 WhatsApp
+    </label>
+    <label style="font-size:12px;font-weight:600;cursor:pointer;">
+      <input type="radio" name="notif-channel" value="telegram" onchange="renderNotifPreview()"> ✈️ Telegram
+    </label>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">ШАБЛОН СООБЩЕНИЯ</div>
+      <div id="notif-tpl-list"></div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">ПРЕДПРОСМОТР</div>
+      <div id="notif-preview" style="font-size:12px;color:var(--text3);padding:20px;text-align:center;">
+        Выберите шаблон слева →
+      </div>
+    </div>
+  </div>
+  <div class="mf"><button class="btn bw" onclick="closeM('m-notif')">Закрыть</button></div>
+</div></div>
+
+<!-- ═══ МАССОВАЯ РАССЫЛКА ═══ -->
+<div class="ov" id="m-bulk-notif"><div class="modal" style="width:580px;max-height:90vh;overflow-y:auto;">
+  <div class="mh">📢 Массовая рассылка</div>
+  <div class="fg"><label class="fl">Шаблон</label>
+    <select class="sel" id="bulk-tpl" style="width:100%;">
+      <option value="reminder_24h">🔔 Напоминание за 24 часа</option>
+      <option value="return_1month">🔄 Возврат через месяц</option>
+      <option value="prp_prep">💉 Подготовка к PRP</option>
+      <option value="birthday">🎉 День рождения</option>
+    </select>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0;">
+    <div style="font-size:12px;font-weight:600;">Активные пациенты (с телефоном):</div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn bw xs" onclick="selectAllBulk(true)">Выбрать все</button>
+      <button class="btn bw xs" onclick="selectAllBulk(false)">Сбросить</button>
+    </div>
+  </div>
+  <div id="bulk-notif-list" style="max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px;"></div>
+  <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:8px 12px;font-size:11px;color:#856404;margin-top:10px;">
+    ⚠️ Рассылка открывает WhatsApp Web. Сообщения отправляются вручную для каждого пациента из списка.
+  </div>
+  <div class="mf">
+    <button class="btn bw" onclick="closeM('m-bulk-notif')">Закрыть</button>
+    <button class="btn bg" onclick="startBulkSend()">📱 Начать рассылку</button>
+  </div>
+</div></div>
+
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Add Patient -->
+<!-- ADD SERVICE MODAL -->
+<div class="ov" id="m-addsvc">
+  <div class="modal">
+    <div class="mh"><div class="mt2">🔧 Новая услуга</div><div class="mx" onclick="closeM('m-addsvc')">✕</div></div>
+    <div class="fg"><label class="fl">Название *</label><input class="fc" id="sv-name" placeholder="Название услуги"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Код МКБ / услуги</label><input class="fc" id="sv-code" placeholder="А11.02.002"></div>
+      <div class="fg"><label class="fl">Категория</label><select class="fc" id="sv-cat">
+        <option>Консультации</option><option>Процедуры</option><option>Диагностика</option>
+        <option>Массаж</option><option>Физиотерапия</option><option>Хирургия</option>
+      </select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Специалист</label><input class="fc" id="sv-doc" placeholder="Шкарпов А.А."></div>
+      <div class="fg"><label class="fl">Длительность (мин)</label><input class="fc" id="sv-dur" type="number" value="30" min="5"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;">
+      <button class="btn bg" onclick="closeM('m-addsvc')">Отмена</button>
+      <button class="btn bp" onclick="saveSvc()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT SERVICE MODAL -->
+<div class="ov" id="m-editsvc">
+  <div class="modal">
+    <div class="mh"><div class="mt2">✏️ Редактировать услугу</div><div class="mx" onclick="closeM('m-editsvc')">✕</div></div>
+    <input type="hidden" id="sv-edit-id">
+    <div class="fg"><label class="fl">Название *</label><input class="fc" id="sve-name"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Код МКБ</label><input class="fc" id="sve-code"></div>
+      <div class="fg"><label class="fl">Категория</label><select class="fc" id="sve-cat">
+        <option>Консультации</option><option>Процедуры</option><option>Диагностика</option>
+        <option>Массаж</option><option>Физиотерапия</option><option>Хирургия</option>
+      </select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Специалист</label><input class="fc" id="sve-doc"></div>
+      <div class="fg"><label class="fl">Длительность (мин)</label><input class="fc" id="sve-dur" type="number" min="5"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:10px;">
+      <button class="btn bd sm" onclick="confirmDelSvc()">🗑 Удалить</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn bg" onclick="closeM('m-editsvc')">Отмена</button>
+        <button class="btn bp" onclick="updateSvc()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DEL SERVICE -->
+<div class="ov" id="m-delsvc">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh"><div class="mt2">Удалить услугу?</div><div class="mx" onclick="closeM('m-delsvc')">✕</div></div>
+    <div class="al a-re">⚠️ Услуга «<span id="del-svc-name"></span>» будет удалена из каталога.</div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;">
+      <button class="btn bg" onclick="closeM('m-delsvc')">Отмена</button>
+      <button class="btn bd" onclick="deleteSvc()">🗑 Удалить</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="m-addpt"><div class="modal">
+  <div class="mh"><div class="mt2">Добавить пациента</div><div class="mx" onclick="closeM('m-addpt')">✕</div></div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Фамилия *</label><input class="fc" id="pt-fam" placeholder="Иванова"></div>
+    <div class="fg"><label class="fl">Имя *</label><input class="fc" id="pt-nam" placeholder="Мария"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Отчество</label><input class="fc" id="pt-pat" placeholder="Петровна"></div>
+    <div class="fg"><label class="fl">Дата рождения *</label><input class="fc" type="date" id="pt-dob"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Пол</label><select class="fc" id="pt-sex"><option value="Ж">Женский</option><option value="М">Мужской</option></select></div>
+    <div class="fg"><label class="fl">Телефон *</label><input class="fc" id="pt-tel" placeholder="+7 900 000-00-00"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Email</label><input class="fc" id="pt-email" type="email" placeholder="patient@mail.ru"></div>
+    <div class="fg"><label class="fl">Источник</label><select class="fc" id="pt-src">
+      <option>Рекомендация</option><option>Яндекс</option><option>2GIS</option>
+      <option>Instagram</option><option>Telegram</option><option>Сайт</option><option>Другое</option>
+    </select></div>
+  </div>
+  <div class="fg"><label class="fl">Диагноз МКБ-10</label><input class="fc" id="pt-diag" placeholder="M17.1 — Гонартроз"></div>
+  <div class="fg"><label class="fl">Примечания</label><textarea class="fc" id="pt-note" rows="2" placeholder="Аллергии, хронические заболевания..."></textarea></div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;">
+    <button class="btn bg" onclick="closeM('m-addpt')">Отмена</button>
+    <button class="btn bp" onclick="savePatient()">Сохранить пациента</button>
+  </div>
+</div></div>
+
+<!-- Edit Patient -->
+<div class="ov" id="m-editpt"><div class="modal">
+  <div class="mh"><div class="mt2">Редактировать пациента</div><div class="mx" onclick="closeM('m-editpt')">✕</div></div>
+  <input type="hidden" id="ept-id">
+  <div class="fr">
+    <div class="fg"><label class="fl">Фамилия *</label><input class="fc" id="ept-fam"></div>
+    <div class="fg"><label class="fl">Имя *</label><input class="fc" id="ept-nam"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Отчество</label><input class="fc" id="ept-pat"></div>
+    <div class="fg"><label class="fl">Дата рождения</label><input class="fc" type="date" id="ept-dob"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Пол</label><select class="fc" id="ept-sex"><option value="Ж">Женский</option><option value="М">Мужской</option></select></div>
+    <div class="fg"><label class="fl">Телефон</label><input class="fc" id="ept-tel"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Email</label><input class="fc" id="ept-email" type="email"></div>
+    <div class="fg"><label class="fl">Источник</label><select class="fc" id="ept-src">
+      <option>Рекомендация</option><option>Яндекс</option><option>2GIS</option>
+      <option>Instagram</option><option>Telegram</option><option>Сайт</option><option>Другое</option>
+    </select></div>
+  </div>
+  <div class="fg"><label class="fl">Диагноз МКБ-10</label><input class="fc" id="ept-diag"></div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Статус</label><select class="fc" id="ept-status">
+      <option>Активный</option><option>Наблюдается</option><option>Завершил лечение</option><option>Архив</option>
+    </select></div>
+    <div class="fg"><label class="fl">Следующий визит</label><input class="fc" type="date" id="ept-next"></div>
+  </div>
+  <div class="fg"><label class="fl">Примечания</label><textarea class="fc" id="ept-note" rows="2"></textarea></div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;">
+    <button class="btn bg" onclick="closeM('m-editpt')">Отмена</button>
+    <button class="btn bp" onclick="updatePatient()">Сохранить</button>
+  </div>
+</div></div>
+
+<!-- Confirm Delete Patient -->
+<div class="ov" id="m-delpt"><div class="modal" style="width:380px;">
+  <div class="mh"><div class="mt2">Удалить пациента?</div><div class="mx" onclick="closeM('m-delpt')">✕</div></div>
+  <div class="al a-re">⚠️ Это действие необратимо. Все данные пациента будут удалены.</div>
+  <div style="font-size:13px;color:var(--text2);margin-bottom:16px;">Пациент: <b id="del-pt-name"></b></div>
+  <input type="hidden" id="del-pt-id">
+  <div style="display:flex;gap:7px;justify-content:flex-end;">
+    <button class="btn bg" onclick="closeM('m-delpt')">Отмена</button>
+    <button class="btn bd" onclick="deletePatient()">Удалить</button>
+  </div>
+</div></div>
+
+<!-- View Patient Card -->
+<!-- ═══ ЭМК — ЭЛЕКТРОННАЯ МЕДИЦИНСКАЯ КАРТА ═══ -->
+<div class="ov" id="m-emk" style="padding:0;align-items:stretch;">
+<div class="emk-wrap">
+
+  <!-- Шапка -->
+  <div class="emk-head">
+    <div class="emk-avatar" id="emk-av">??</div>
+    <div style="flex:1;min-width:0;">
+      <div id="emk-name" style="font-family:var(--serif);font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Пациент</div>
+      <div id="emk-meta" style="font-size:11px;color:var(--text3);margin-top:2px;">—</div>
+    </div>
+    <div id="emk-allergy-badge" style="display:none;background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#991b1b;">⚠️ Аллергия</div>
+    <div style="display:flex;gap:6px;flex-shrink:0;">
+      <button class="btn bp" style="font-size:12px;" onclick="emkNewVisit()">＋ Запись</button>
+      <button class="btn bg" style="font-size:12px;" onclick="emkEditPt()">✏️ Изменить</button>
+      <button class="btn bg" style="font-size:12px;" onclick="emkPrint()">🖨 Печать</button>
+      <button class="btn bp" style="font-size:12px;" onclick="emkPdf()">📄 PDF</button>
+      <button class="btn" style="font-size:12px;background:#25d366;color:#fff;border:none;" onclick="openNotifModal(currentEmkPtId||window._emkPtId)">📱 Уведомление</button>
+      <button class="btn" style="font-size:12px;padding:6px 10px;" onclick="closeM('m-emk')">✕</button>
+    </div>
+  </div>
+
+  <!-- Вкладки -->
+  <div class="emk-tabs">
+    <button class="emk-tab on" onclick="emkTab('overview',this)">📋 Обзор</button>
+    <button class="emk-tab" onclick="emkTab('visits',this)">🗓 Визиты</button>
+    <button class="emk-tab" onclick="emkTab('diags',this)">🔍 Диагнозы</button>
+    <button class="emk-tab" onclick="emkTab('labs',this)">🧪 Анализы</button>
+    <button class="emk-tab" onclick="emkTab('protos',this)">📄 Протоколы</button>
+    <button class="emk-tab" onclick="emkTab('meds',this)">💊 Препараты</button>
+    <button class="emk-tab" onclick="emkTab('files',this)">📎 Файлы</button>
+    <button class="emk-tab" onclick="emkTab('finance',this)">💰 Финансы</button>
+  </div>
+
+  <!-- Контент -->
+  <div class="emk-body" id="emk-body">
+    <div style="text-align:center;padding:40px;color:var(--text3);">Загрузка...</div>
+  </div>
+
+</div>
+</div>
+
+
+
+<!-- Add User -->
+<div class="ov" id="m-adduser"><div class="modal">
+  <div class="mh"><div class="mt2">Добавить пользователя</div><div class="mx" onclick="closeM('m-adduser')">✕</div></div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Фамилия *</label><input class="fc" id="au-fam" placeholder="Иванов"></div>
+    <div class="fg"><label class="fl">Имя *</label><input class="fc" id="au-nam" placeholder="Павел"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Отчество</label><input class="fc" id="au-pat" placeholder="Сергеевич"></div>
+    <div class="fg"><label class="fl">Должность</label><input class="fc" id="au-pos" placeholder="Ортопед-травматолог"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Роль *</label><select class="fc" id="au-role">
+      <option value="doctor">🩺 Врач</option>
+      <option value="admin">📋 Администратор</option>
+      <option value="director">👑 Руководитель</option>
+    </select></div>
+    <div class="fg"><label class="fl">Телефон</label><input class="fc" id="au-tel" placeholder="+7 900 000-00-00"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Логин *</label><input class="fc" id="au-login" placeholder="doctor2"></div>
+    <div class="fg"><label class="fl">Пароль *</label><input class="fc" type="password" id="au-pass" placeholder="минимум 4 символа"></div>
+  </div>
+  <div class="fg"><label class="fl">Email</label><input class="fc" id="au-email" type="email" placeholder="user@alternativa.ru"></div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;">
+    <button class="btn bg" onclick="closeM('m-adduser')">Отмена</button>
+    <button class="btn bp" onclick="saveUser()">Создать пользователя</button>
+  </div>
+</div></div>
+
+<!-- Edit User -->
+<div class="ov" id="m-edituser"><div class="modal">
+  <div class="mh"><div class="mt2">Редактировать пользователя</div><div class="mx" onclick="closeM('m-edituser')">✕</div></div>
+  <input type="hidden" id="eu-id">
+  <div class="fr">
+    <div class="fg"><label class="fl">ФИО</label><input class="fc" id="eu-name"></div>
+    <div class="fg"><label class="fl">Должность</label><input class="fc" id="eu-pos"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Роль</label><select class="fc" id="eu-role">
+      <option value="doctor">🩺 Врач</option>
+      <option value="admin">📋 Администратор</option>
+      <option value="director">👑 Руководитель</option>
+    </select></div>
+    <div class="fg"><label class="fl">Телефон</label><input class="fc" id="eu-tel"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Логин</label><input class="fc" id="eu-login"></div>
+    <div class="fg"><label class="fl">Новый пароль</label><input class="fc" type="password" id="eu-pass" placeholder="Оставьте пустым"></div>
+  </div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Статус</label><select class="fc" id="eu-status">
+      <option value="active">Активен</option><option value="blocked">Заблокирован</option>
+    </select></div>
+    <div class="fg"><label class="fl">Email</label><input class="fc" id="eu-email" type="email"></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;">
+    <button class="btn bg" onclick="closeM('m-edituser')">Отмена</button>
+    <button class="btn bd sm" onclick="confirmDelUser()">🗑 Удалить</button>
+    <button class="btn bp" onclick="updateUser()">Сохранить</button>
+  </div>
+</div></div>
+
+<!-- Confirm Delete User -->
+<div class="ov" id="m-deluser"><div class="modal" style="width:380px;">
+  <div class="mh"><div class="mt2">Удалить пользователя?</div><div class="mx" onclick="closeM('m-deluser')">✕</div></div>
+  <div class="al a-re">⚠️ Пользователь потеряет доступ к системе. Это действие необратимо.</div>
+  <div style="font-size:13px;color:var(--text2);margin-bottom:16px;">Сотрудник: <b id="del-usr-name"></b></div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;">
+    <button class="btn bg" onclick="closeM('m-deluser')">Отмена</button>
+    <button class="btn bd" onclick="deleteUser()">Удалить</button>
+  </div>
+</div></div>
+
+<!-- New Visit -->
+
+<!-- ═══ NEW VISIT MODAL v2 ═══ -->
+<div class="ov" id="m-newvisit2"><div class="modal" style="width:520px;">
+  <div class="mh"><div class="mt2">📅 Новая запись</div><div class="mx" onclick="closeM('m-newvisit2')">✕</div></div>
+  <div class="mg">
+    <div class="fg"><label class="fl">Пациент *</label>
+      <select class="inp sel" id="nv-pt2">
+        <option value="">— Выберите пациента —</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Услуга *</label>
+      <select class="inp sel" id="nv-svc2" onchange="nv2SvcChange()">
+        <option value="">— Выберите услугу —</option>
+      </select>
+    </div>
+    <div class="g3">
+      <div class="fg"><label class="fl">Дата *</label><input class="inp" type="date" id="nv-date2"></div>
+      <div class="fg"><label class="fl">Время</label>
+        <select class="inp sel" id="nv-time2">
+          <option value="08:00">08:00</option><option value="08:30">08:30</option>
+          <option value="09:00">09:00</option><option value="09:30">09:30</option>
+          <option value="10:00">10:00</option><option value="10:30">10:30</option>
+          <option value="11:00">11:00</option><option value="11:30">11:30</option>
+          <option value="12:00">12:00</option><option value="12:30">12:30</option>
+          <option value="13:00">13:00</option><option value="14:00">14:00</option>
+          <option value="14:30">14:30</option><option value="15:00">15:00</option>
+          <option value="15:30">15:30</option><option value="16:00">16:00</option>
+          <option value="16:30">16:30</option><option value="17:00">17:00</option>
+          <option value="17:30">17:30</option><option value="18:00">18:00</option>
+          <option value="18:30">18:30</option><option value="19:00">19:00</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Длит. (мин)</label><input class="inp" type="number" id="nv-dur2" value="30"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Врач</label>
+        <select class="inp sel" id="nv-doc2">
+          <option value="Шкарпов А.А.">Шкарпов А.А.</option>
+          <option value="Жильцова Н.М.">Жильцова Н.М.</option>
+          <option value="Массажист В.П.">Массажист В.П.</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Статус</label>
+        <select class="inp sel" id="nv-status2">
+          <option value="wait">Ожидает</option>
+          <option value="conf">Подтверждён</option>
+          <option value="here">Пришёл</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Примечание</label><input class="inp" id="nv-note2" placeholder="Жалобы, комментарий..."></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);">
+    <button class="btn" onclick="closeM('m-newvisit2')">Отмена</button>
+    <button class="btn bp" onclick="saveNewVisit2()">📅 Записать</button>
+  </div>
+</div></div>
+
+<!-- ─── PROTOCOL HEADER (shared label) ─── -->
+<div style="display:none"><span id="proto-pt-label"></span><span id="proto-svc-label"></span></div>
+
+<!-- ═══ PROTOCOL: Консультация / Первичный/Повторный приём ═══ -->
+<div class="ov" id="m-proto-consult"><div class="modal" style="width:600px;max-height:90vh;overflow-y:auto;">
+  <div class="mh"><div class="mt2">🩺 Протокол приёма</div><div class="mx" onclick="closeM('m-proto-consult')">✕</div></div>
+  <div class="mg">
+    <div style="background:#eff6ff;border-radius:8px;padding:10px 14px;font-size:12px;color:#1e3a5f;margin-bottom:12px;">
+      <b id="proto-pt-label-c"></b> &nbsp;|&nbsp; <span id="proto-svc-label-c"></span>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Жалобы (кратко)</label><textarea class="inp" rows="2" id="pc-complaints" placeholder="Боль в колене при ходьбе, ВАШ 6/10..."></textarea></div>
+      <div class="fg"><label class="fl">Анамнез</label><textarea class="inp" rows="2" id="pc-anamnesis" placeholder="Болеет 1,5 года, лечение НПВС..."></textarea></div>
+    </div>
+    <div class="g3">
+      <div class="fg"><label class="fl">Зона поражения</label>
+        <select class="inp sel" id="pc-zone">
+          <option>Коленный (правый)</option><option>Коленный (левый)</option>
+          <option>Тазобедренный (правый)</option><option>Тазобедренный (левый)</option>
+          <option>Плечевой (правый)</option><option>Плечевой (левый)</option>
+          <option>Голеностопный (правый)</option><option>Голеностопный (левый)</option>
+          <option>Поясничный отдел</option><option>Шейный отдел</option><option>Другое</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">ВАШ (0–10)</label><input class="inp" type="number" min="0" max="10" id="pc-vas" placeholder="6"></div>
+      <div class="fg"><label class="fl">Диагноз МКБ-10</label><input class="inp" id="pc-diag" placeholder="M17.1"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Объективно</label><textarea class="inp" rows="2" id="pc-obj" placeholder="Отёк +, крепитация, ограничение сгибания до 90°..."></textarea></div>
+      <div class="fg"><label class="fl">План лечения</label><textarea class="inp" rows="2" id="pc-plan" placeholder="PRP ×3, УЗИ-контроль, НПВС отменить..."></textarea></div>
+    </div>
+    <div class="fg"><label class="fl">Рекомендации пациенту</label><input class="inp" id="pc-rec" placeholder="Ограничить нагрузку, отменить диклофенак..."></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Следующий визит</label><input class="inp" type="date" id="pc-next"></div>
+      <div class="fg"><label class="fl">Врач</label><input class="inp" id="pc-doc" value="Шкарпов А.А."></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);">
+    <button class="btn" onclick="closeM('m-proto-consult')">Отмена</button>
+    <button class="btn bg" onclick="printProto('m-proto-consult')">🖨 Печать</button>
+    <button class="btn bp" onclick="saveProto('consult')">💾 Сохранить</button>
+  </div>
+</div></div>
+
+<!-- ═══ PROTOCOL: PRP-терапия ═══ -->
+<div class="ov" id="m-proto-prp"><div class="modal" style="width:600px;max-height:90vh;overflow-y:auto;">
+  <div class="mh"><div class="mt2">💉 Протокол PRP-терапии</div><div class="mx" onclick="closeM('m-proto-prp')">✕</div></div>
+  <div class="mg">
+    <div style="background:#f0fdf4;border-radius:8px;padding:10px 14px;font-size:12px;color:#14532d;margin-bottom:12px;">
+      <b id="proto-pt-label-p"></b>
+    </div>
+    <div class="g3">
+      <div class="fg"><label class="fl">Зона введения</label>
+        <select class="inp sel" id="pp-zone">
+          <option>Коленный (правый)</option><option>Коленный (левый)</option>
+          <option>Тазобедренный (правый)</option><option>Тазобедренный (левый)</option>
+          <option>Плечевой (правый)</option><option>Плечевой (левый)</option>
+          <option>Пяточная шпора (правая)</option><option>Пяточная шпора (левая)</option>
+          <option>Позвоночник</option><option>Другое</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Инъекция № в курсе</label>
+        <select class="inp sel" id="pp-num">
+          <option>1 из 3</option><option>2 из 3</option><option>3 из 3</option>
+          <option>1 из 2</option><option>2 из 2</option><option>Разовая</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Диагноз МКБ-10</label><input class="inp" id="pp-diag" placeholder="M17.1"></div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--text2);margin:8px 0 4px;">Забор и центрифугирование</div>
+    <div class="g3">
+      <div class="fg"><label class="fl">Объём крови (мл)</label><input class="inp" type="number" id="pp-blood" placeholder="27"></div>
+      <div class="fg"><label class="fl">Пробирки (шт)</label><input class="inp" type="number" id="pp-tubes" placeholder="3"></div>
+      <div class="fg"><label class="fl">Объём PRP (мл)</label><input class="inp" type="number" id="pp-vol" placeholder="4"></div>
+    </div>
+    <div class="g3">
+      <div class="fg"><label class="fl">Тромбоциты ×10⁹/л</label><input class="inp" id="pp-plt" placeholder="980"></div>
+      <div class="fg"><label class="fl">Активатор</label>
+        <select class="inp sel" id="pp-activ">
+          <option>Без активатора</option><option>CaCl₂</option><option>Тромбин</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Игла G</label>
+        <select class="inp sel" id="pp-needle">
+          <option>21G</option><option>22G</option><option>23G</option><option>18G</option>
+        </select>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">УЗИ-навигация</label>
+        <select class="inp sel" id="pp-uzi">
+          <option>Да</option><option>Нет (клинически)</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Анестезия</label>
+        <select class="inp sel" id="pp-anes">
+          <option>Без анестезии</option><option>Местная (лидокаин)</option><option>Местная (ультракаин)</option>
+        </select>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Переносимость</label>
+        <select class="inp sel" id="pp-toler">
+          <option>Хорошая</option><option>Удовлетворительная</option><option>Нежелательная реакция</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Следующая инъекция</label><input class="inp" type="date" id="pp-next"></div>
+    </div>
+    <div class="fg"><label class="fl">Примечание</label><input class="inp" id="pp-note2" placeholder="Особенности, наблюдения..."></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);">
+    <button class="btn" onclick="closeM('m-proto-prp')">Отмена</button>
+    <button class="btn bg" onclick="printProto('m-proto-prp')">🖨 Печать</button>
+    <button class="btn bp" onclick="generatePdfPRP(window._emkPtId||currentEmkPtId)">📄 PDF</button>
+    <button class="btn bp" onclick="saveProto('prp')">💾 Сохранить</button>
+  </div>
+</div></div>
+
+<!-- ═══ PROTOCOL: Инъекции / Блокады / Введения ═══ -->
+<div class="ov" id="m-proto-inject"><div class="modal" style="width:560px;max-height:90vh;overflow-y:auto;">
+  <div class="mh"><div class="mt2">💊 Протокол инъекции / блокады</div><div class="mx" onclick="closeM('m-proto-inject')">✕</div></div>
+  <div class="mg">
+    <div class="fg"><label class="fl">Услуга</label><input class="inp" id="pi-svc" placeholder="Введение Гиалуформ..."></div>
+    <div class="g3">
+      <div class="fg"><label class="fl">Зона</label>
+        <select class="inp sel" id="pi-zone">
+          <option>Коленный (правый)</option><option>Коленный (левый)</option>
+          <option>Тазобедренный (правый)</option><option>Тазобедренный (левый)</option>
+          <option>Плечевой (правый)</option><option>Плечевой (левый)</option>
+          <option>Голеностопный</option><option>Позвоночник</option><option>Другое</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Препарат</label><input class="inp" id="pi-drug" placeholder="Гиалуформ 1.8%"></div>
+      <div class="fg"><label class="fl">Доза</label><input class="inp" id="pi-dose" placeholder="2 мл"></div>
+    </div>
+    <div class="g3">
+      <div class="fg"><label class="fl">Метод</label>
+        <select class="inp sel" id="pi-method">
+          <option>Внутрисуставно</option><option>Околосуставно</option>
+          <option>Периостально</option><option>В/м</option><option>Паравертебрально</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">УЗИ-навигация</label>
+        <select class="inp sel" id="pi-uzi">
+          <option>Да</option><option>Нет</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Анестезия</label>
+        <select class="inp sel" id="pi-anes">
+          <option>Нет</option><option>Лидокаин</option><option>Ультракаин</option>
+        </select>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Переносимость</label>
+        <select class="inp sel" id="pi-toler">
+          <option>Хорошая</option><option>Удовлетворительная</option><option>НР</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Следующий визит</label><input class="inp" type="date" id="pi-next"></div>
+    </div>
+    <div class="fg"><label class="fl">Рекомендации</label><input class="inp" id="pi-rec" placeholder="Ограничить нагрузку 3 дня, НПВС не принимать..."></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);">
+    <button class="btn" onclick="closeM('m-proto-inject')">Отмена</button>
+    <button class="btn bg" onclick="printProto('m-proto-inject')">🖨 Печать</button>
+    <button class="btn bp" onclick="saveProto('inject')">💾 Сохранить</button>
+  </div>
+</div></div>
+
+<!-- ═══ PROTOCOL: УЗИ ═══ -->
+<div class="ov" id="m-proto-uzi"><div class="modal" style="width:580px;max-height:90vh;overflow-y:auto;">
+  <div class="mh"><div class="mt2">🔬 Протокол УЗИ суставов</div><div class="mx" onclick="closeM('m-proto-uzi')">✕</div></div>
+  <div class="mg">
+    <div class="g3">
+      <div class="fg"><label class="fl">Сустав</label>
+        <select class="inp sel" id="pu-joint">
+          <option>Коленный</option><option>Тазобедренный</option><option>Плечевой</option>
+          <option>Голеностопный</option><option>Лучезапястный</option><option>Мягкие ткани</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Сторона</label>
+        <select class="inp sel" id="pu-side">
+          <option>Правый</option><option>Левый</option><option>Оба</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Датчик (МГц)</label>
+        <select class="inp sel" id="pu-sensor">
+          <option>7.5</option><option>10</option><option>12</option><option>5</option>
+        </select>
+      </div>
+    </div>
+    <div class="g3">
+      <div class="fg"><label class="fl">Суст. щель медиально (мм)</label><input class="inp" type="number" step="0.1" id="pu-gap-m" placeholder="4.2"></div>
+      <div class="fg"><label class="fl">Суст. щель латерально (мм)</label><input class="inp" type="number" step="0.1" id="pu-gap-l" placeholder="4.8"></div>
+      <div class="fg"><label class="fl">Толщина хряща (мм)</label><input class="inp" type="number" step="0.1" id="pu-cart" placeholder="1.8"></div>
+    </div>
+    <div class="g3">
+      <div class="fg"><label class="fl">Синовия (мм)</label><input class="inp" type="number" step="0.1" id="pu-syn" placeholder="2.1"></div>
+      <div class="fg"><label class="fl">Выпот (мл)</label><input class="inp" type="number" step="0.1" id="pu-effus" placeholder="4"></div>
+      <div class="fg"><label class="fl">Эхогенность выпота</label>
+        <select class="inp sel" id="pu-echo">
+          <option>Нет</option><option>Анэхогенный</option><option>Гипоэхогенный</option><option>Гетерогенный</option>
+        </select>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Синовиальная оболочка</label>
+        <select class="inp sel" id="pu-syn-stat">
+          <option>Не утолщена</option><option>Утолщена умеренно</option><option>Значительно утолщена</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">ЦДК васкуляризация</label>
+        <select class="inp sel" id="pu-cdk">
+          <option>Нет</option><option>Единичные сосуды</option><option>Выражена</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Заключение</label><textarea class="inp" rows="3" id="pu-concl" placeholder="Эхо-признаки гонартроза 2 ст. справа. Синовит умеренный..."></textarea></div>
+    <div class="fg"><label class="fl">Рекомендации</label><input class="inp" id="pu-rec" placeholder="PRP-терапия, контроль через 4 нед..."></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);">
+    <button class="btn" onclick="closeM('m-proto-uzi')">Отмена</button>
+    <button class="btn bg" onclick="printProto('m-proto-uzi')">🖨 Печать</button>
+    <button class="btn bp" onclick="generatePdfUZI(window._emkPtId||currentEmkPtId)">📄 PDF</button>
+    <button class="btn bp" onclick="saveProto('uzi')">💾 Сохранить</button>
+  </div>
+</div></div>
+
+<!-- ═══ PROTOCOL: Массаж ═══ -->
+<div class="ov" id="m-proto-massage"><div class="modal" style="width:520px;max-height:90vh;overflow-y:auto;">
+  <div class="mh"><div class="mt2">🤲 Протокол массажа</div><div class="mx" onclick="closeM('m-proto-massage')">✕</div></div>
+  <div class="mg">
+    <div class="g2">
+      <div class="fg"><label class="fl">Вид массажа</label><input class="inp" id="pm-type" placeholder="Массаж спины, шеи, поясницы"></div>
+      <div class="fg"><label class="fl">Длительность (мин)</label><input class="inp" type="number" id="pm-dur" placeholder="40"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Массажист</label><input class="inp" id="pm-spec" value="Массажист В.П."></div>
+      <div class="fg"><label class="fl">Сеанс № в курсе</label>
+        <select class="inp sel" id="pm-num">
+          <option>1</option><option>2</option><option>3</option><option>4</option>
+          <option>5</option><option>6</option><option>7</option><option>8</option>
+          <option>10</option><option>Разовый</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Зоны воздействия</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px solid var(--border);border-radius:8px;" id="pm-zones">
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" value="Шея"> Шея</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" value="Воротниковая зона" checked> Воротниковая зона</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" value="Спина" checked> Спина</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" value="Поясница"> Поясница</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" value="Нижние конечности"> Нижние конечности</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" value="Верхние конечности"> Верхние конечности</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" value="Стопы"> Стопы</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" value="Лицо"> Лицо</label>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Техники</label><input class="inp" id="pm-tech" placeholder="Поглаживание, разминание, вибрация..."></div>
+      <div class="fg"><label class="fl">Переносимость</label>
+        <select class="inp sel" id="pm-toler">
+          <option>Хорошая</option><option>Удовлетворительная</option><option>Болезненно</option>
+        </select>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Состояние после</label><input class="inp" id="pm-after" placeholder="Расслаблен, тонус снижен..."></div>
+      <div class="fg"><label class="fl">Следующий сеанс</label><input class="inp" type="date" id="pm-next"></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);">
+    <button class="btn" onclick="closeM('m-proto-massage')">Отмена</button>
+    <button class="btn bg" onclick="printProto('m-proto-massage')">🖨 Печать</button>
+    <button class="btn bp" onclick="saveProto('massage')">💾 Сохранить</button>
+  </div>
+</div></div>
+
+<!-- ═══ PROTOCOL: В/В В/М капельно ═══ -->
+<div class="ov" id="m-proto-iv"><div class="modal" style="width:520px;max-height:90vh;overflow-y:auto;">
+  <div class="mh"><div class="mt2">💊 Протокол инфузионной терапии</div><div class="mx" onclick="closeM('m-proto-iv')">✕</div></div>
+  <div class="mg">
+    <div class="g2">
+      <div class="fg"><label class="fl">Вид введения</label>
+        <select class="inp sel" id="piv-type">
+          <option>В/в капельно</option><option>В/в струйно</option><option>В/м введение</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Скорость (кап/мин)</label><input class="inp" type="number" id="piv-speed" placeholder="40"></div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--text2);margin:8px 0 4px;">Препараты</div>
+    <div id="piv-drugs">
+      <div class="g3" style="margin-bottom:6px;">
+        <div class="fg"><label class="fl">Препарат 1</label><input class="inp" placeholder="Актовегин 5 мл"></div>
+        <div class="fg"><label class="fl">Доза</label><input class="inp" placeholder="5 мл"></div>
+        <div class="fg"><label class="fl">Растворитель</label><input class="inp" placeholder="NaCl 200 мл"></div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Длительность (мин)</label><input class="inp" type="number" id="piv-dur" placeholder="60"></div>
+      <div class="fg"><label class="fl">Переносимость</label>
+        <select class="inp sel" id="piv-toler">
+          <option>Хорошая</option><option>Удовлетворительная</option><option>НР</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Примечание</label><input class="inp" id="piv-note" placeholder="АД до/после, жалобы..."></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);">
+    <button class="btn" onclick="closeM('m-proto-iv')">Отмена</button>
+    <button class="btn bg" onclick="printProto('m-proto-iv')">🖨 Печать</button>
+    <button class="btn bp" onclick="saveProto('iv')">💾 Сохранить</button>
+  </div>
+</div></div>
+
+<!-- ═══ PROTOCOL: Подология ═══ -->
+<div class="ov" id="m-proto-pod"><div class="modal" style="width:520px;max-height:90vh;overflow-y:auto;">
+  <div class="mh"><div class="mt2">🦶 Протокол подологической процедуры</div><div class="mx" onclick="closeM('m-proto-pod')">✕</div></div>
+  <div class="mg">
+    <div class="fg"><label class="fl">Процедуры</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px solid var(--border);border-radius:8px;">
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" id="ppod-hyper"> Обработка гиперкератоза</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" id="ppod-nails"> Обработка ногтей</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" id="ppod-ingrown"> Лечение вросшего ногтя</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" id="ppod-callus"> Удаление мозолей</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" id="ppod-crack"> Обработка трещин</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;"><input type="checkbox" id="ppod-apparatus"> Аппаратный педикюр</label>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Локализация</label><input class="inp" id="ppod-loc" placeholder="1 палец правой стопы, пятка..."></div>
+      <div class="fg"><label class="fl">Скоба / метод</label><input class="inp" id="ppod-method" placeholder="Скоба Заски, резекция..."></div>
+    </div>
+    <div class="fg"><label class="fl">Рекомендации по уходу</label><input class="inp" id="ppod-rec" placeholder="Крем Бальзамед, широкая обувь..."></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Следующий визит</label><input class="inp" type="date" id="ppod-next"></div>
+      <div class="fg"><label class="fl">Цель следующего</label>
+        <select class="inp sel" id="ppod-goal">
+          <option>Контрольный</option><option>Повторная обработка</option><option>Снятие скобы</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);">
+    <button class="btn" onclick="closeM('m-proto-pod')">Отмена</button>
+    <button class="btn bg" onclick="printProto('m-proto-pod')">🖨 Печать</button>
+    <button class="btn bp" onclick="saveProto('pod')">💾 Сохранить</button>
+  </div>
+</div></div>
+
+<!-- ═══ PROTOCOL: SVF-терапия ═══ -->
+<div class="ov" id="m-proto-svf"><div class="modal" style="width:560px;max-height:90vh;overflow-y:auto;">
+  <div class="mh"><div class="mt2">🧬 Протокол SVF-терапии</div><div class="mx" onclick="closeM('m-proto-svf')">✕</div></div>
+  <div class="mg">
+    <div class="g3">
+      <div class="fg"><label class="fl">Зона введения</label>
+        <select class="inp sel" id="psvf-zone">
+          <option>Коленный (правый)</option><option>Коленный (левый)</option>
+          <option>Тазобедренный (правый)</option><option>Тазобедренный (левый)</option>
+          <option>Фасеточные суставы</option><option>Другое</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Кол-во суставов</label>
+        <select class="inp sel" id="psvf-joints">
+          <option>1 сустав</option><option>2 сустава</option><option>Фасеточный (2 ур.)</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Аутоплазмы</label>
+        <select class="inp sel" id="psvf-plasma">
+          <option>2 аутоплазмы</option><option>1 аутоплазма</option><option>3 аутоплазмы</option>
+        </select>
+      </div>
+    </div>
+    <div class="g3">
+      <div class="fg"><label class="fl">Объём жировой ткани (мл)</label><input class="inp" type="number" id="psvf-fat" placeholder="30"></div>
+      <div class="fg"><label class="fl">Объём SVF (мл)</label><input class="inp" type="number" id="psvf-vol" placeholder="5"></div>
+      <div class="fg"><label class="fl">Тромбоциты ×10⁹/л</label><input class="inp" id="psvf-plt" placeholder="900"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">УЗИ-навигация</label>
+        <select class="inp sel" id="psvf-uzi">
+          <option>Да</option><option>Нет</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Переносимость</label>
+        <select class="inp sel" id="psvf-toler">
+          <option>Хорошая</option><option>Удовлетворительная</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Примечание</label><input class="inp" id="psvf-note" placeholder="Особенности процедуры..."></div>
+    <div class="fg"><label class="fl">Следующий контроль</label><input class="inp" type="date" id="psvf-next"></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);">
+    <button class="btn" onclick="closeM('m-proto-svf')">Отмена</button>
+    <button class="btn bg" onclick="printProto('m-proto-svf')">🖨 Печать</button>
+    <button class="btn bp" onclick="saveProto('svf')">💾 Сохранить</button>
+  </div>
+</div></div>
+
+<!-- ═══ PROTOCOL: Реабилитация / ЛФК ═══ -->
+<div class="ov" id="m-proto-rehab"><div class="modal" style="width:520px;max-height:90vh;overflow-y:auto;">
+  <div class="mh"><div class="mt2">🏃 Протокол реабилитации / ЛФК</div><div class="mx" onclick="closeM('m-proto-rehab')">✕</div></div>
+  <div class="mg">
+    <div class="g3">
+      <div class="fg"><label class="fl">Этап реабилитации</label>
+        <select class="inp sel" id="preh-stage">
+          <option>Ранний (1–2 нед.)</option><option>Восстановительный (3–8 нед.)</option>
+          <option>Функциональный (2–4 мес.)</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">ВАШ до (0–10)</label><input class="inp" type="number" min="0" max="10" id="preh-vas-b" placeholder="6"></div>
+      <div class="fg"><label class="fl">ВАШ после (0–10)</label><input class="inp" type="number" min="0" max="10" id="preh-vas-a" placeholder="4"></div>
+    </div>
+    <div class="fg"><label class="fl">Выполненные упражнения</label>
+      <textarea class="inp" rows="3" id="preh-exer" placeholder="Изометрия квадрицепса 15×3, подъём прямой ноги 10×3..."></textarea>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Физиотерапия</label><input class="inp" id="preh-physio" placeholder="УВТ 3 Бар, 2000 имп., МЛТ..."></div>
+      <div class="fg"><label class="fl">Нагрузка</label>
+        <select class="inp sel" id="preh-load">
+          <option>Минимальная</option><option>Умеренная</option><option>Полная</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Динамика</label><input class="inp" id="preh-dyn" placeholder="Улучшение объёма движений на 15°..."></div>
+    <div class="fg"><label class="fl">Следующий сеанс</label><input class="inp" type="date" id="preh-next"></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);">
+    <button class="btn" onclick="closeM('m-proto-rehab')">Отмена</button>
+    <button class="btn bg" onclick="printProto('m-proto-rehab')">🖨 Печать</button>
+    <button class="btn bp" onclick="saveProto('rehab2')">💾 Сохранить</button>
+  </div>
+</div></div>
+
+
+<!-- PRP Protocol -->
+<div class="ov" id="m-prp"><div class="modal">
+  <div class="mh"><div class="mt2">Протокол PRP-терапии</div><div class="mx" onclick="closeM('m-prp')">✕</div></div>
+  <div class="fr"><div class="fg"><label class="fl">Пациент</label><select class="fc"><option>Смирнова Е.А.</option><option>Козлов В.Н.</option></select></div><div class="fg"><label class="fl">Инъекция №</label><select class="fc"><option>1 из 3</option><option>2 из 3</option><option>3 из 3</option></select></div></div>
+  <div class="fr"><div class="fg"><label class="fl">Кровь (мл)</label><input class="fc" type="number" value="27"></div><div class="fg"><label class="fl">PRP (мл)</label><input class="fc" type="number" value="4"></div></div>
+  <div class="fr"><div class="fg"><label class="fl">Обороты</label><input class="fc" value="3200"></div><div class="fg"><label class="fl">Время (мин)</label><input class="fc" value="10"></div></div>
+  <div class="fr"><div class="fg"><label class="fl">Зона введения</label><select class="fc"><option>Коленный (правый)</option><option>ТБС правый</option><option>Плечевой</option></select></div><div class="fg"><label class="fl">Контроль</label><select class="fc"><option>УЗИ-навигация</option><option>Клинически</option></select></div></div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;"><button class="btn bg" onclick="closeM('m-prp')">Отмена</button><button class="btn bm" onclick="closeM('m-prp');toast('✅ Протокол PRP сохранён')">Сохранить</button></div>
+</div></div>
+
+<!-- Notifications -->
+<div class="ov" id="m-notif"><div class="modal">
+  <div class="mh"><div class="mt2">Уведомления</div><div class="mx" onclick="closeM('m-notif')">✕</div></div>
+  <div class="al a-re">🚨 Гришин А.К. — боль 4 дня после PRP. Нужен звонок!</div>
+  <div class="al a-am">⚠️ Козлов В.Н. — варфарин. Уточнить до процедуры.</div>
+  <div class="al a-bl">📅 Смирнова Е.А. — PRP №1 назначена на 20.03.</div>
+  <div class="al a-mi">✅ Новиков С.П. — курс завершён успешно.</div>
+  <div style="text-align:right;margin-top:9px;"><button class="btn bg" onclick="closeM('m-notif')">Закрыть</button></div>
+</div></div>
+
+<!-- Doc -->
+<div class="ov" id="m-doc"><div class="modal">
+  <div class="mh"><div class="mt2">Документы пациента</div><div class="mx" onclick="closeM('m-doc')">✕</div></div>
+  <div class="pc"><div class="pi" style="background:var(--blue-l);">📄</div><div style="flex:1;"><div style="font-size:12px;font-weight:600;">Протокол осмотра 09.03.2026</div></div><button class="btn bg xs" onclick="toast('📥 Скачивание...')">Скачать</button></div>
+  <div class="pc"><div class="pi" style="background:var(--rose-l);">📋</div><div style="flex:1;"><div style="font-size:12px;font-weight:600;">Информированное согласие PRP</div></div><button class="btn bg xs" onclick="toast('📥 Скачивание...')">Скачать</button></div>
+  <div class="pc"><div class="pi" style="background:rgba(74,108,247,.08);">📱</div><div style="flex:1;"><div style="font-size:12px;font-weight:600;">Памятка: PRP</div></div><button class="btn bg xs" onclick="toast('📱 Переотправлено')">Переслать</button></div>
+  <div style="text-align:right;margin-top:9px;"><button class="btn bp" onclick="closeM('m-doc');go('docs')">Создать новый →</button></div>
+</div></div>
+
+<!-- Scripts -->
+<div class="ov" id="m-s1"><div class="modal"><div class="mh"><div class="mt2">Скрипт: Первичный звонок</div><div class="mx" onclick="closeM('m-s1')">✕</div></div><div style="background:#f8f9ff;border-radius:10px;padding:14px;font-size:13px;line-height:1.85;"><b>Пациент:</b> "Хочу записаться к ортопеду."<br><br><b>Администратор:</b> "Здравствуйте! Рады вам помочь. Подскажите — вас беспокоит конкретный сустав? Вы были у нас раньше?<br><br>[Первичный]: Отлично, запишем на первичный осмотр. У нас есть время [варианты]. Что удобно?"</div><div style="text-align:right;margin-top:10px;"><button class="btn bg" onclick="closeM('m-s1')">Закрыть</button></div></div></div>
+<div class="ov" id="m-s2"><div class="modal"><div class="mh"><div class="mt2">Скрипт: Вопрос о PRP</div><div class="mx" onclick="closeM('m-s2')">✕</div></div><div style="background:#f8f9ff;border-radius:10px;padding:14px;font-size:13px;line-height:1.85;"><b>Пациент:</b> "Что такое PRP?"<br><br><b>Администратор:</b> "PRP — лечение собственной плазмой крови прямо в сустав. Никакой химии — только ваши факторы роста. Болезненность минимальная, при необходимости местная анестезия.<br><br>Запишитесь на консультацию — врач скажет, подходит ли вам этот метод."</div><div style="text-align:right;margin-top:10px;"><button class="btn bg" onclick="closeM('m-s2')">Закрыть</button></div></div></div>
+<div class="ov" id="m-s3"><div class="modal"><div class="mh"><div class="mt2">Скрипт: Возражение «Дорого»</div><div class="mx" onclick="closeM('m-s3')">✕</div></div><div style="background:#f8f9ff;border-radius:10px;padding:14px;font-size:13px;line-height:1.85;"><b>Пациент:</b> "В другой клинике дешевле."<br><br><b>Администратор:</b> "Понимаю. В нашу стоимость входит:<br>— Врач-ортопед 10+ лет опыта<br>— Введение под УЗИ-контролем<br>— Наблюдение весь курс<br>— Сертифицированные материалы<br><br>Доступна рассрочка на курс лечения."</div><div style="text-align:right;margin-top:10px;"><button class="btn bg" onclick="closeM('m-s3')">Закрыть</button></div></div></div>
+
+<!-- Stock -->
+
+<!-- SERVICES PAGE -->
+<div class="page" id="p-svcs">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div>
+      <div style="font-family:var(--serif);font-size:20px;font-weight:600;color:#0f172a;">Каталог услуг</div>
+      <div style="font-size:12px;color:#64748b;" id="svc-count">Загрузка...</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <input class="fc" id="svc-search" placeholder="🔍 Поиск услуги..." style="width:220px;padding:7px 12px;font-size:12px;" oninput="renderSvcs()">
+      <button class="btn bg sm" onclick="resetSvcs()">↺ Сброс</button>
+      <button class="btn bp" onclick="openM('m-addsvc')">＋ Добавить услугу</button>
+    </div>
+  </div>
+  <div class="card">
+    <table id="svc-table">
+      <thead><tr>
+        <th>Код</th><th>Название</th><th>Категория</th><th>Специалист</th><th>Длит.</th><th>Статус</th><th style="text-align:center;">Действия</th>
+      </tr></thead>
+      <tbody id="svc-tbody"></tbody>
+    </table>
+    <div id="svc-empty" style="display:none;text-align:center;padding:40px;color:#64748b;">
+      <div style="font-size:36px;margin-bottom:10px;opacity:.4;">🔧</div>
+      <div style="font-size:14px;font-weight:600;">Услуг нет</div>
+    </div>
+  </div>
+</div>
+<div class="ov" id="m-stock"><div class="modal">
+  <div class="mh"><div class="mt2">Приход на склад</div><div class="mx" onclick="closeM('m-stock')">✕</div></div>
+  <div class="fg"><label class="fl">Наименование</label><input class="fc" placeholder="Пробирки Regen Lab"></div>
+  <div class="fr"><div class="fg"><label class="fl">Количество</label><input class="fc" type="number" placeholder="50"></div><div class="fg"><label class="fl">Партия</label><input class="fc" placeholder="RL-2025-XXXX"></div></div>
+  <div class="fg"><label class="fl">Срок годности</label><input class="fc" type="date"></div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;"><button class="btn bg" onclick="closeM('m-stock')">Отмена</button><button class="btn bp" onclick="closeM('m-stock');toast('✅ Приход оформлен')">Оформить</button></div>
+</div></div>
+
+<script src="js/data.js"></script>
+<script src="js/pdf.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/patients.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/emk.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+
+<!-- ═══ MODALS: NEW MODULES ═══ -->
+<div class="ov" id="m-addplan"><div class="modal" style="width:540px;">
+  <div class="mh"><div class="mt2">Новый план лечения</div><div class="mx" onclick="closeM('m-addplan')">✕</div></div>
+  <div class="mg">
+    <div class="fg"><label class="fl">Пациент</label><select class="inp sel" id="pl-patient"></select></div>
+    <div class="fg"><label class="fl">Диагноз</label><input class="inp" id="pl-diag" placeholder="M17.1 Гонартроз..."></div>
+    <div class="g2"><div class="fg"><label class="fl">Начало</label><input class="inp" type="date" id="pl-start"></div>
+    <div class="fg"><label class="fl">Окончание (план)</label><input class="inp" type="date" id="pl-end"></div></div>
+    <div class="fg"><label class="fl">Услуги в курсе</label>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;" id="pl-svcs-check">
+        <label class="cr"><input type="checkbox" value="PRP-терапия × 3"> PRP-терапия × 3</label>
+        <label class="cr"><input type="checkbox" value="УЗИ-контроль × 2"> УЗИ-контроль × 2</label>
+        <label class="cr"><input type="checkbox" value="ЛФК × 10"> ЛФК × 10</label>
+        <label class="cr"><input type="checkbox" value="Массаж × 5"> Массаж × 5</label>
+        <label class="cr"><input type="checkbox" value="Физиотерапия"> Физиотерапия</label>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Цель лечения / примечание</label><textarea class="inp" id="pl-note" rows="2" placeholder="Снижение ВАШ до 2/10, восстановление ROM..."></textarea></div>
+    <div class="fg"><label class="fl">Стоимость курса (₽)</label><input class="inp" type="number" id="pl-cost" placeholder="0"></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;"><button class="btn bg" onclick="closeM('m-addplan')">Отмена</button><button class="btn bp" onclick="savePlan()">Создать план</button></div>
+</div></div>
+
+<div class="ov" id="m-addpay"><div class="modal" style="width:480px;">
+  <div class="mh"><div class="mt2">Принять оплату</div><div class="mx" onclick="closeM('m-addpay')">✕</div></div>
+  <div class="mg">
+    <div class="fg"><label class="fl">Пациент</label><select class="inp sel" id="pay-patient"></select></div>
+    <div class="fg"><label class="fl">Услуга</label><select class="inp sel" id="pay-svc"></select></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Сумма (₽)</label><input class="inp" type="number" id="pay-sum" placeholder="0"></div>
+      <div class="fg"><label class="fl">Способ оплаты</label>
+        <select class="inp sel" id="pay-method"><option value="Наличные">Наличные</option><option value="Карта">Карта/Эквайринг</option><option value="Безнал">Безналичный</option></select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Примечание</label><input class="inp" id="pay-note" placeholder="Необязательно"></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;"><button class="btn bg" onclick="closeM('m-addpay')">Отмена</button><button class="btn bp" onclick="savePayment()">Принять оплату</button></div>
+</div></div>
+
+<div class="ov" id="m-addtask"><div class="modal" style="width:480px;">
+  <div class="mh"><div class="mt2">Новая задача</div><div class="mx" onclick="closeM('m-addtask')">✕</div></div>
+  <div class="mg">
+    <div class="fg"><label class="fl">Название задачи</label><input class="inp" id="tk-title" placeholder="Позвонить пациенту, заказать расходники..."></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Приоритет</label>
+        <select class="inp sel" id="tk-priority"><option value="Обычное">Обычное</option><option value="Важно">Важно</option><option value="Срочно">Срочно</option></select>
+      </div>
+      <div class="fg"><label class="fl">Срок</label><input class="inp" type="date" id="tk-due"></div>
+    </div>
+    <div class="fg"><label class="fl">Исполнитель</label>
+      <select class="inp sel" id="tk-assignee">
+        <option value="Шкарпов А.А.">Шкарпов А.А. (врач)</option>
+        <option value="Администратор">Администратор</option>
+        <option value="Горзина Л.П.">Горзина Л.П. (руководитель)</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Описание</label><textarea class="inp" id="tk-desc" rows="2" placeholder="Подробности задачи..."></textarea></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;"><button class="btn bg" onclick="closeM('m-addtask')">Отмена</button><button class="btn bp" onclick="saveTask()">Создать</button></div>
+</div></div>
+
+<div class="ov" id="m-addlead"><div class="modal" style="width:440px;">
+  <div class="mh"><div class="mt2">Новый лид</div><div class="mx" onclick="closeM('m-addlead')">✕</div></div>
+  <div class="mg">
+    <div class="fg"><label class="fl">Имя / ФИО</label><input class="inp" id="lead-name" placeholder="Иванов Иван"></div>
+    <div class="fg"><label class="fl">Телефон</label><input class="inp" id="lead-tel" placeholder="+7..."></div>
+    <div class="fg"><label class="fl">Источник</label>
+      <select class="inp sel" id="lead-src"><option>Сайт</option><option>Соцсети</option><option>Рекомендация</option><option>Звонок</option><option>Повторный</option><option>Другое</option></select>
+    </div>
+    <div class="fg"><label class="fl">Интерес</label><input class="inp" id="lead-interest" placeholder="PRP, консультация ортопеда..."></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;"><button class="btn bg" onclick="closeM('m-addlead')">Отмена</button><button class="btn bp" onclick="saveLead()">Добавить</button></div>
+</div></div>
+
+<div class="ov" id="m-addbonus"><div class="modal" style="width:420px;">
+  <div class="mh"><div class="mt2">Начислить бонусы</div><div class="mx" onclick="closeM('m-addbonus')">✕</div></div>
+  <div class="mg">
+    <div class="fg"><label class="fl">Пациент</label><select class="inp sel" id="bon-patient"></select></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Баллы</label><input class="inp" type="number" id="bon-pts" placeholder="0"></div>
+      <div class="fg"><label class="fl">Причина</label><input class="inp" id="bon-reason" placeholder="За визит, акция..."></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;"><button class="btn bg" onclick="closeM('m-addbonus')">Отмена</button><button class="btn bp" onclick="saveBonus()">Начислить</button></div>
+</div></div>
+
+<div class="ov" id="m-addscenario"><div class="modal" style="width:480px;">
+  <div class="mh"><div class="mt2">Новый сценарий</div><div class="mx" onclick="closeM('m-addscenario')">✕</div></div>
+  <div class="mg">
+    <div class="fg"><label class="fl">Название</label><input class="inp" id="sc-name" placeholder="Напоминание о визите..."></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Триггер</label>
+        <select class="inp sel" id="sc-trigger"><option>За 24ч до приёма</option><option>После приёма</option><option>Через 1 месяц без визита</option><option>День рождения</option><option>Завершение курса</option></select>
+      </div>
+      <div class="fg"><label class="fl">Канал</label>
+        <select class="inp sel" id="sc-channel"><option>WhatsApp</option><option>SMS</option><option>Email</option><option>Telegram</option></select>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Шаблон сообщения</label><textarea class="inp" id="sc-msg" rows="3" placeholder="Уважаемый {имя}, напоминаем о визите..."></textarea></div>
+    <div style="display:flex;gap:6px;margin-top:4px;"><button class="btn bg xs" onclick="aiScenarioMsg()">🤖 AI-составить</button></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;"><button class="btn bg" onclick="closeM('m-addscenario')">Отмена</button><button class="btn bp" onclick="saveScenario()">Создать</button></div>
+</div></div>
+
+<!-- ADD STOCK (full CRUD) -->
+<div class="ov" id="m-addstock"><div class="modal" style="width:460px;">
+  <div class="mh"><div class="mt2">Приход на склад</div><div class="mx" onclick="closeM('m-addstock')">✕</div></div>
+  <div class="mg">
+    <div class="fg"><label class="fl">Наименование *</label><input class="inp" id="st-name" placeholder="Пробирки PRP ECO TUBE..."></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">Категория</label><select class="inp sel" id="st-cat"><option>PRP</option><option>Анестетики</option><option>ГК</option><option>Расходники</option><option>Препараты</option></select></div>
+      <div class="fg"><label class="fl">Ед. измерения</label><select class="inp sel" id="st-unit"><option>шт</option><option>мл</option><option>уп</option><option>кг</option></select></div>
+    </div>
+    <div class="g3">
+      <div class="fg"><label class="fl">Количество</label><input class="inp" type="number" id="st-qty" placeholder="0"></div>
+      <div class="fg"><label class="fl">Минимум</label><input class="inp" type="number" id="st-min" placeholder="5"></div>
+      <div class="fg"><label class="fl">Цена (₽/ед)</label><input class="inp" type="number" id="st-price" placeholder="0"></div>
+    </div>
+    <div class="fg"><label class="fl">Поставщик</label><input class="inp" id="st-supplier" placeholder="ООО МедСнаб..."></div>
+  </div>
+  <div style="display:flex;gap:7px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border);">
+    <button class="btn" onclick="closeM('m-addstock')">Отмена</button>
+    <button class="btn bp" onclick="saveStock()">Оприходовать</button>
+  </div>
+</div></div>
+</body>
+</html>
+
+<div id="p-doctor" style="display:none;"></div>
+
+
